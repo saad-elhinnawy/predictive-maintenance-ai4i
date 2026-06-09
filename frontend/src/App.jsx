@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import TrackingDashboard from './pages/TrackingDashboard';
+import AdminOrders from './pages/Admin/AdminOrders';
+import AdminOrderDetail from './pages/Admin/AdminOrderDetail';
 
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash || '#/');
@@ -31,6 +33,23 @@ export default function App() {
 
   const commonProps = { lang, setLang: handleSetLang };
 
+  // ── Admin routes ─────────────────────────────────────────
+  if (segments[0] === 'admin') {
+    const token = localStorage.getItem('bmw_token');
+    const user  = JSON.parse(localStorage.getItem('bmw_user') || '{}');
+    if (!token || user?.role !== 'ADMIN') {
+      // useAdminGuard inside each page also handles this, but short-circuit here too
+      return <Login {...commonProps} />;
+    }
+    // #/admin/orders/:orderId
+    if (segments[1] === 'orders' && segments[2]) {
+      return <AdminOrderDetail {...commonProps} orderId={segments[2]} />;
+    }
+    // #/admin (orders list is the default admin page)
+    return <AdminOrders {...commonProps} />;
+  }
+
+  // ── Customer routes ───────────────────────────────────────
   if (segments[0] === 'tracking' && segments[1]) {
     return <TrackingDashboard {...commonProps} orderId={segments[1]} />;
   }
@@ -39,9 +58,15 @@ export default function App() {
     return <Login {...commonProps} />;
   }
 
-  // Root or unknown route — redirect to login if unauthenticated
-  if (!localStorage.getItem('bmw_token')) {
-    return <Login {...commonProps} />;
+  // Root — redirect to login if unauthenticated, admin panel if ADMIN
+  const token = localStorage.getItem('bmw_token');
+  if (!token) return <Login {...commonProps} />;
+
+  const rootUser = JSON.parse(localStorage.getItem('bmw_user') || '{}');
+  if (rootUser?.role === 'ADMIN') {
+    // Admins land on the admin panel
+    window.location.hash = '#/admin';
+    return null;
   }
 
   return <Home {...commonProps} />;

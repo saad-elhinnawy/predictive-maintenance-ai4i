@@ -26,7 +26,14 @@ router.get('/orders', async (req: AuthRequest, res: Response): Promise<void> => 
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { id: true, email: true, name: true } },
-        shipment: { select: { id: true, currentMilestone: true, billOfLading: true } },
+        shipment: {
+          select: {
+            id: true,
+            currentMilestone: true,
+            billOfLading: true,
+            trackingEvents: { select: { timestamp: true }, orderBy: { timestamp: 'desc' }, take: 1 },
+          },
+        },
       },
     }),
     prisma.order.count({ where }),
@@ -39,6 +46,28 @@ router.get('/orders', async (req: AuthRequest, res: Response): Promise<void> => 
     limit,
     totalPages: Math.ceil(total / limit),
   });
+});
+
+// GET /api/admin/orders/:orderId — full order detail for admin
+router.get('/orders/:orderId', async (req: AuthRequest, res: Response): Promise<void> => {
+  const order = await prisma.order.findUnique({
+    where: { id: req.params.orderId },
+    include: {
+      user: { select: { id: true, email: true, name: true, createdAt: true } },
+      shipment: {
+        include: {
+          trackingEvents: { orderBy: { timestamp: 'desc' } },
+        },
+      },
+    },
+  });
+
+  if (!order) {
+    res.status(404).json({ error: 'Order not found' });
+    return;
+  }
+
+  res.json(order);
 });
 
 const milestoneSchema = z.object({
