@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPING
+  DELIVERED
+}
+
+enum Milestone {
+  PURCHASED
+  INLAND_TO_PORT
+  LOADING
+  OCEAN_TRANSIT
+  PORT_ARRIVAL
+  CUSTOMS
+  INLAND_TO_CUSTOMER
+  DELIVERED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  orders       Order[]
+
+  @@map("users")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  userId        String
+  carModel      String
+  configuration Json
+  totalPrice    Float
+  status        OrderStatus @default(PENDING)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  user          User        @relation(fields: [userId], references: [id])
+  shipment      Shipment?
+
+  @@map("orders")
+}
+
+model Shipment {
+  id               String          @id @default(cuid())
+  orderId          String          @unique
+  billOfLading     String?
+  vesselImo        String?
+  currentMilestone Milestone       @default(PURCHASED)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  order            Order           @relation(fields: [orderId], references: [id])
+  trackingEvents   TrackingEvent[]
+
+  @@map("shipments")
+}
+
+model TrackingEvent {
+  id         String    @id @default(cuid())
+  shipmentId String
+  milestone  Milestone
+  timestamp  DateTime
+  notes      String?
+  gpsLat     Float?
+  gpsLng     Float?
+  vesselName String?
+  shipment   Shipment  @relation(fields: [shipmentId], references: [id])
+
+  @@map("tracking_events")
+}
