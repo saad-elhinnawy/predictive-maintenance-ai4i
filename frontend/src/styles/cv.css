@@ -479,3 +479,114 @@ img, svg { display: block; }
 /* Arabic RTL hint */
 [dir="rtl"] .cv-navbar-left { flex-direction: row-reverse; }
 [dir="rtl"] .cv-step-v-notes { border-left: none; border-right: 3px solid var(--cv-primary); border-radius: var(--cv-radius-sm) 0 0 var(--cv-radius-sm); }
+
+/* ─── Keyframes (shared) ─────────────────────────────────── */
+@keyframes cv-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes cv-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes cv-drift {
+  0%,100% { transform: translateX(0); }
+  50%      { transform: translateX(6px); }
+}
+
+/* ─── Car hero (tracking page) ───────────────────────────── */
+.cv-car-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--cv-bg-card) 0%, rgba(28,105,212,.06) 100%);
+  border: 1px solid var(--cv-border);
+  border-radius: var(--cv-radius);
+  margin-bottom: 32px;
+  overflow: hidden;
+  position: relative;
+}
+.cv-car-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 80% 50%, rgba(28,105,212,.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cv-car-hero-info   { flex: 1; min-width: 0; }
+.cv-car-hero-visual { flex-shrink: 0; }
+
+/* Progress bar */
+.cv-progress-track {
+  height: 4px;
+  background: var(--cv-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.cv-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 600ms cubic-bezier(.22,1,.36,1);
+}
+
+/* ─── 360 preview ────────────────────────────────────────── */
+.cv-preview-wrap {
+  perspective: 800px;
+  display: inline-block;
+}
+.cv-preview-inner {
+  transform-style: preserve-3d;
+  transition: transform 80ms linear;
+  cursor: grab;
+  user-select: none;
+}
+.cv-preview-inner:active { cursor: grabbing; }
+.cv-preview-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  color: var(--cv-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.cv-preview-collapse:hover { color: var(--cv-text); }
+.cv-preview-chevron {
+  font-size: 10px;
+  transition: transform 200ms;
+}
+.cv-preview-chevron.open { transform: rotate(180deg); }
+
+/* ─── Colour note ────────────────────────────────────────── */
+.cv-colour-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--cv-text-dim);
+  margin-top: 8px;
+}
+.cv-colour-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+/* ─── Ocean drift animation ──────────────────────────────── */
+.cv-ocean-drift {
+  animation: cv-drift 4s ease-in-out infinite;
+}
+
+/* ─── Responsive for car hero ────────────────────────────── */
+@media (max-width: 767px) {
+  .cv-car-hero        { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .cv-car-hero-visual { align-self: center; }
+  .cv-preview-wrap    { max-width: 100%; }
+}
