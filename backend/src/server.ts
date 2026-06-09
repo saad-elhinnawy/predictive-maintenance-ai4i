@@ -6,6 +6,8 @@ import helmet from 'helmet';
 import authRoutes from './routes/auth';
 import ordersRoutes from './routes/orders';
 import adminRoutes from './routes/admin';
+import webhookRoutes from './routes/webhooks';
+import { startVesselPollerCron } from './jobs/vesselPoller';
 
 const app = express();
 
@@ -26,6 +28,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -51,6 +54,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 const PORT = parseInt(process.env.PORT || '4000', 10);
 app.listen(PORT, () => {
   console.log(`BMW Export API running on port ${PORT} [${process.env.NODE_ENV ?? 'development'}]`);
+  startVesselPollerCron();
 });
 
 export default app;

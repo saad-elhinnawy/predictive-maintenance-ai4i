@@ -1,11 +1,12 @@
 import { Router, Response } from 'express';
-import { PrismaClient, Milestone } from '@prisma/client';
+import { Milestone } from '@prisma/client';
 import { z } from 'zod';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
-import { sendMilestoneUpdate } from '../services/email';
+import prisma from '../lib/prisma';
+import { advanceMilestone } from '../services/milestoneService';
+import { fetchVesselPosition } from '../services/marineTraffic';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 router.use(authenticate, requireAdmin);
 
@@ -91,13 +92,33 @@ router.post('/shipments/:shipmentId/milestone', async (req: AuthRequest, res: Re
   const { shipmentId } = req.params;
   const { milestone, notes, gpsLat, gpsLng, vesselName, vesselImo, billOfLading } = parsed.data;
 
+  // Update optional shipment fields before advancing milestone
+  if (vesselImo !== undefined || billOfLading !== undefined) {
+    const data: Record<string, unknown> = {};
+    if (vesselImo    !== undefined) data.vesselImo    = vesselImo;
+    if (billOfLading !== undefined) data.billOfLading = billOfLading;
+    await prisma.shipment.update({ where: { id: shipmentId }, data });
+  }
+
+  const advanced = await advanceMilestone({ shipmentId, milestone, notes, gpsLat, gpsLng, vesselName });
+
+  if (advanced === false) {
+    // advanceMilestone returns false when shipment not found OR milestone already reached
+    const exists = await prisma.shipment.findUnique({ where: { id: shipmentId }, select: { id: true } });
+    if (!exists) {
+      res.status(404).json({ error: 'Shipment not found' });
+      return;
+    }
+  }
+
+  res.json({ success: true, advanced });
+});
+
+// POST /api/admin/shipments/:shipmentId/refresh-vessel
+router.post('/shipments/:shipmentId/refresh-vessel', async (req: AuthRequest, res: Response): Promise<void> => {
   const shipment = await prisma.shipment.findUnique({
-    where: { id: shipmentId },
-    include: {
-      order: {
-        include: { user: { select: { email: true, name: true } } },
-      },
-    },
+    where: { id: req.params.shipmentId },
+    select: { id: true, vesselImo: true, currentMilestone: true },
   });
 
   if (!shipment) {
@@ -105,47 +126,47 @@ router.post('/shipments/:shipmentId/milestone', async (req: AuthRequest, res: Re
     return;
   }
 
-  const updateData: Record<string, unknown> = { currentMilestone: milestone };
-  if (vesselImo !== undefined) updateData.vesselImo = vesselImo;
-  if (billOfLading !== undefined) updateData.billOfLading = billOfLading;
-
-  await prisma.$transaction([
-    prisma.shipment.update({
-      where: { id: shipmentId },
-      data: updateData,
-    }),
-    prisma.trackingEvent.create({
-      data: {
-        shipmentId,
-        milestone,
-        timestamp: new Date(),
-        notes,
-        gpsLat,
-        gpsLng,
-        vesselName,
-      },
-    }),
-  ]);
-
-  // Also sync order status when key milestones are hit
-  const orderStatusMap: Partial<Record<Milestone, string>> = {
-    [Milestone.PURCHASED]: 'PAID',
-    [Milestone.INLAND_TO_PORT]: 'SHIPPING',
-    [Milestone.DELIVERED]: 'DELIVERED',
-  };
-  const newOrderStatus = orderStatusMap[milestone];
-  if (newOrderStatus) {
-    await prisma.order.update({
-      where: { id: shipment.orderId },
-      data: { status: newOrderStatus as any },
-    });
+  if (!shipment.vesselImo) {
+    res.status(422).json({ error: 'Shipment has no vesselImo set' });
+    return;
   }
 
-  // Fire-and-forget email notification
-  const { user } = shipment.order;
-  sendMilestoneUpdate(user.email, user.name, shipment.order.carModel, milestone).catch(console.error);
+  try {
+    const position = await fetchVesselPosition(shipment.vesselImo);
 
-  res.json({ success: true });
+    if (!position) {
+      await prisma.shipment.update({
+        where: { id: shipment.id },
+        data:  { marineTrafficError: true },
+      });
+      res.status(502).json({ error: 'No position data returned by MarineTraffic' });
+      return;
+    }
+
+    await prisma.vesselPosition.create({
+      data: {
+        shipmentId: shipment.id,
+        lat:        position.lat,
+        lng:        position.lng,
+        speed:      position.speed,
+        heading:    position.heading,
+        timestamp:  position.timestamp,
+      },
+    });
+
+    await prisma.shipment.update({
+      where: { id: shipment.id },
+      data:  { marineTrafficError: false },
+    });
+
+    res.json({ position });
+  } catch (err) {
+    await prisma.shipment.update({
+      where: { id: shipment.id },
+      data:  { marineTrafficError: true },
+    });
+    throw err;
+  }
 });
 
 // GET /api/admin/shipments — list all shipments

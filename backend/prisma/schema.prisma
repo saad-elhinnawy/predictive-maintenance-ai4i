@@ -57,14 +57,16 @@ model Order {
 }
 
 model Shipment {
-  id               String          @id @default(cuid())
-  orderId          String          @unique
-  billOfLading     String?
-  vesselImo        String?
-  currentMilestone Milestone       @default(PURCHASED)
-  createdAt        DateTime        @default(now()) @map("created_at")
-  order            Order           @relation(fields: [orderId], references: [id])
-  trackingEvents   TrackingEvent[]
+  id                 String          @id @default(cuid())
+  orderId            String          @unique
+  billOfLading       String?
+  vesselImo          String?
+  currentMilestone   Milestone       @default(PURCHASED)
+  marineTrafficError Boolean         @default(false)
+  createdAt          DateTime        @default(now()) @map("created_at")
+  order              Order           @relation(fields: [orderId], references: [id])
+  trackingEvents     TrackingEvent[]
+  vesselPositions    VesselPosition[]
 
   @@map("shipments")
 }
@@ -81,4 +83,19 @@ model TrackingEvent {
   shipment   Shipment  @relation(fields: [shipmentId], references: [id])
 
   @@map("tracking_events")
+}
+
+model VesselPosition {
+  id         String   @id @default(cuid())
+  shipmentId String
+  lat        Float
+  lng        Float
+  speed      Float?
+  heading    Float?
+  timestamp  DateTime
+  createdAt  DateTime @default(now()) @map("created_at")
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId, timestamp])
+  @@map("vessel_positions")
 }
