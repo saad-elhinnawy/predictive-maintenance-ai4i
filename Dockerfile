@@ -2,24 +2,23 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy manifests first for layer caching
+# Copy package manifests first for layer caching
 COPY backend/package*.json backend/
 COPY frontend/package*.json frontend/
-COPY backend/prisma backend/prisma
 
-# Install ALL deps (dev included) — needed for tsc and vite
+# Install ALL deps (dev included — needed for tsc and vite)
+# No NODE_ENV override needed: Docker build env is separate from runtime env vars
 RUN npm --prefix backend install
 RUN npm --prefix frontend install
 
-# Copy rest of source
+# Copy full source
 COPY . .
 
-# Build: frontend → prisma generate → tsc (backend)
-RUN npm --prefix backend run build:frontend
-RUN npm --prefix backend exec -- prisma generate
-RUN npm --prefix backend exec -- tsc
+# Build: npm run build runs build:frontend + prisma generate + tsc
+# npm --prefix sets CWD to backend/, so all relative paths work correctly
+RUN npm --prefix backend run build
 
-# Prune devDeps from backend after compile
+# Remove devDeps from backend for a leaner runtime image
 RUN npm --prefix backend prune --production
 
 EXPOSE 4000
