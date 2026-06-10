@@ -30,6 +30,24 @@ enum Milestone {
   DELIVERED
 }
 
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+}
+
+enum ListingStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -42,29 +60,61 @@ model User {
   @@map("users")
 }
 
+model CarListing {
+  id           String        @id @default(cuid())
+  make         String
+  model        String
+  year         Int
+  mileage      Int           @default(0)
+  condition    String        @default("NEW")
+  fuelType     FuelType
+  transmission Transmission
+  power        Int?
+  engineSize   Float?
+  color        String?
+  bodyType     String?
+  photos       Json
+  basePrice    Float
+  shippingCost Float         @default(1200)
+  taxRate      Float         @default(0.14)
+  customsRate  Float         @default(0.05)
+  status       ListingStatus @default(AVAILABLE)
+  sourceUrl    String?
+  sourceSite   String?       @default("mobile.de")
+  features     Json?
+  mjPrompt     String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt      @map("updated_at")
+  orders       Order[]
+
+  @@map("car_listings")
+}
+
 model Order {
   id            String      @id @default(cuid())
   userId        String
+  listingId     String?
   carModel      String
   configuration Json
   totalPrice    Float
   status        OrderStatus @default(PENDING)
   createdAt     DateTime    @default(now()) @map("created_at")
   user          User        @relation(fields: [userId], references: [id])
+  listing       CarListing? @relation(fields: [listingId], references: [id])
   shipment      Shipment?
 
   @@map("orders")
 }
 
 model Shipment {
-  id                 String          @id @default(cuid())
-  orderId            String          @unique
+  id                 String           @id @default(cuid())
+  orderId            String           @unique
   billOfLading       String?
   vesselImo          String?
-  currentMilestone   Milestone       @default(PURCHASED)
-  marineTrafficError Boolean         @default(false)
-  createdAt          DateTime        @default(now()) @map("created_at")
-  order              Order           @relation(fields: [orderId], references: [id])
+  currentMilestone   Milestone        @default(PURCHASED)
+  marineTrafficError Boolean          @default(false)
+  createdAt          DateTime         @default(now()) @map("created_at")
+  order              Order            @relation(fields: [orderId], references: [id])
   trackingEvents     TrackingEvent[]
   vesselPositions    VesselPosition[]
 

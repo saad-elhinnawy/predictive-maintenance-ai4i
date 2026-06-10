@@ -1,22 +1,9 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  lazy,
-  Suspense,
-} from 'react';
-import NavBar   from '../components/NavBar';
-import CarSVG   from '../components/ui/CarSVG';
-import CarPhoto from '../components/ui/CarPhoto';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import NavBar  from '../components/NavBar';
+import CarSVG  from '../components/ui/CarSVG';
 import { t, C, MILESTONES, ORDER_STATUS_COLOR } from '../constants';
 
 const VesselMap = lazy(() => import('../components/VesselMap'));
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const DEFAULT_COLOUR = '#EEEEE8'; // Alpine White
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,23 +30,6 @@ function stepState(idx, activeIdx) {
   return 'pending';
 }
 
-function getCarColour(config) {
-  if (!config) return null;
-  const key = Object.keys(config).find((k) =>
-    /colou?r|exterior|paint|farbe/i.test(k),
-  );
-  if (!key) return null;
-  const val   = String(config[key] ?? '');
-  const match = val.match(/#([0-9A-Fa-f]{3,6})\b/);
-  return match ? match[0] : null;
-}
-
-function getPhotoUrl(config) {
-  if (!config) return null;
-  const key = Object.keys(config).find((k) => /photo|image|img|url/i.test(k));
-  return key ? String(config[key]) : null;
-}
-
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
 function StepCircle({ state, icon, num }) {
@@ -70,7 +40,7 @@ function StepCircle({ state, icon, num }) {
   );
 }
 
-function HorizontalStepper({ milestones, activeIdx, eventsMap, lang, accentHex }) {
+function HorizontalStepper({ milestones, activeIdx, eventsMap, lang }) {
   return (
     <div className="cv-stepper-h">
       {milestones.map((m, i) => {
@@ -79,10 +49,7 @@ function HorizontalStepper({ milestones, activeIdx, eventsMap, lang, accentHex }
         return (
           <div key={m.key} className={`cv-step-h ${state}`}>
             <StepCircle state={state} icon={m.icon} num={i + 1} />
-            <div
-              className={`cv-step-h-label ${state}`}
-              style={state === 'active' ? { color: accentHex } : undefined}
-            >
+            <div className={`cv-step-h-label ${state}`}>
               {milestoneLabel(m, lang)}
             </div>
             {ev && <div className="cv-step-h-time">{fmtDate(ev.timestamp, lang)}</div>}
@@ -93,7 +60,7 @@ function HorizontalStepper({ milestones, activeIdx, eventsMap, lang, accentHex }
   );
 }
 
-function VerticalStepper({ milestones, activeIdx, eventsMap, lang, accentHex }) {
+function VerticalStepper({ milestones, activeIdx, eventsMap, lang }) {
   return (
     <div className="cv-stepper-v">
       {milestones.map((m, i) => {
@@ -109,7 +76,7 @@ function VerticalStepper({ milestones, activeIdx, eventsMap, lang, accentHex }) 
             <div className="cv-step-v-body">
               <div className="cv-step-v-title">
                 <span style={{
-                  color: state === 'done' ? C.success : state === 'active' ? accentHex : C.textDim,
+                  color: state === 'done' ? C.success : state === 'active' ? C.accent : C.textDim,
                 }}>
                   {milestoneLabel(m, lang)}
                 </span>
@@ -136,84 +103,6 @@ function VerticalStepper({ milestones, activeIdx, eventsMap, lang, accentHex }) 
   );
 }
 
-function Preview360({ hex, photoSrc }) {
-  const [open,  setOpen]  = useState(false);
-  const [rotY,  setRotY]  = useState(0);
-  const [modal, setModal] = useState(false);
-  const dragging = useRef(false);
-  const lastX    = useRef(0);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-  function onPointerDown(e) {
-    dragging.current = true;
-    lastX.current    = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  }
-  function onPointerMove(e) {
-    if (!dragging.current) return;
-    const x = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-    setRotY((r) => r + (x - lastX.current) * 0.4);
-    lastX.current = x;
-  }
-  function onPointerUp() { dragging.current = false; }
-
-  const w = isMobile ? 120 : 300;
-
-  const rotatingCar = (
-    <div
-      className="cv-preview-wrap"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
-    >
-      <div className="cv-preview-inner" style={{ transform: `rotateY(${rotY}deg)` }}>
-        <CarPhoto src={photoSrc} hex={hex} width={w} />
-      </div>
-    </div>
-  );
-
-  return (
-    <div>
-      <button
-        className="cv-preview-collapse"
-        onClick={() => (isMobile ? setModal(true) : setOpen((o) => !o))}
-        aria-expanded={open}
-      >
-        <span>360° Preview — drag to rotate</span>
-        {!isMobile && (
-          <span className={`cv-preview-chevron ${open ? 'open' : ''}`}>▼</span>
-        )}
-      </button>
-
-      {!isMobile && open && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
-          {rotatingCar}
-        </div>
-      )}
-
-      {isMobile && modal && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 8000,
-            background: 'rgba(0,0,0,0.88)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexDirection: 'column', gap: 20,
-          }}
-          onClick={() => setModal(false)}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
-            <CarPhoto src={photoSrc} hex={hex} width={Math.min(window.innerWidth - 48, 300)} />
-          </div>
-          <button className="cv-btn cv-btn-ghost cv-btn-sm" onClick={() => setModal(false)}>
-            Close
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function SkeletonUI() {
   return (
     <div>
@@ -231,14 +120,6 @@ function SkeletonUI() {
             </div>
           ))}
         </div>
-      </div>
-      <div className="cv-card">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ marginBottom: 16 }}>
-            <div className="cv-skeleton" style={{ height: 14, width: '60%', marginBottom: 6 }} />
-            <div className="cv-skeleton" style={{ height: 12, width: '40%' }} />
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -269,7 +150,7 @@ function ToastContainer({ toasts }) {
   );
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function TrackingDashboard({ orderId, lang, setLang }) {
   const tr    = t[lang];
@@ -344,15 +225,10 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
     return MILESTONES.findIndex((m) => m.key === cur);
   }, [order]);
 
-  const carColour       = useMemo(() => getCarColour(order?.configuration) ?? DEFAULT_COLOUR, [order]);
-  const photoUrl        = useMemo(() => getPhotoUrl(order?.configuration), [order]);
-  const colourIsDefault = !getCarColour(order?.configuration);
-  const progressPct     = activeIdx >= 0 ? Math.round(((activeIdx + 1) / MILESTONES.length) * 100) : 0;
-  const isOcean         = order?.shipment?.currentMilestone === 'OCEAN_TRANSIT';
-
-  const oceanEvent = eventsMap['OCEAN_TRANSIT'];
-  const showMap    =
-    isOcean && oceanEvent?.gpsLat != null && oceanEvent?.gpsLng != null;
+  const progressPct = activeIdx >= 0 ? Math.round(((activeIdx + 1) / MILESTONES.length) * 100) : 0;
+  const isOcean     = order?.shipment?.currentMilestone === 'OCEAN_TRANSIT';
+  const oceanEvent  = eventsMap['OCEAN_TRANSIT'];
+  const showMap     = isOcean && oceanEvent?.gpsLat != null && oceanEvent?.gpsLng != null;
 
   if (!token) return null;
 
@@ -382,20 +258,10 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                     <span className={`cv-badge ${statusClass}`}>{order.status}</span>
                   </div>
 
-                  <div className="cv-colour-note">
-                    <div className="cv-colour-swatch" style={{ background: carColour }} title={carColour} />
-                    {colourIsDefault ? 'Colour will be confirmed at purchase' : carColour}
-                  </div>
-
-                  {/* Progress bar tinted to car colour */}
                   <div className="cv-progress-track" style={{ marginTop: 14, maxWidth: 260 }}>
                     <div
                       className="cv-progress-fill"
-                      style={{
-                        width: `${progressPct}%`,
-                        background: `linear-gradient(90deg, ${carColour}88, ${carColour})`,
-                        boxShadow: `0 0 8px ${carColour}55`,
-                      }}
+                      style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${C.primary}88, ${C.accent})` }}
                     />
                   </div>
                   <div style={{ fontSize: 11, color: C.textDim, marginTop: 6 }}>
@@ -409,10 +275,9 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                   </div>
                 </div>
 
-                {/* Car SVG — drifts when at sea */}
                 <div className={`cv-car-hero-visual${isOcean ? ' cv-ocean-drift' : ''}`}>
                   <CarSVG
-                    hex={carColour}
+                    hex={C.primary}
                     width={typeof window !== 'undefined' && window.innerWidth < 768 ? 140 : 220}
                   />
                 </div>
@@ -427,77 +292,33 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                 </div>
               )}
 
-              {/* ── 360° Preview ── */}
-              <div className="cv-section">
-                <div className="cv-card cv-card-sm">
-                  <Preview360 hex={carColour} photoSrc={photoUrl} />
-                </div>
-              </div>
-
               {/* ── Milestone stepper ── */}
               <div className="cv-section">
                 <p className="cv-section-title">{tr.trackingTitle}</p>
-                <div
-                  className="cv-card"
-                  style={{
-                    padding: '24px 16px',
-                    borderColor: isOcean ? `${carColour}44` : undefined,
-                  }}
-                >
+                <div className="cv-card" style={{ padding: '24px 16px' }}>
                   <div className="cv-stepper-h-wrap">
-                    <HorizontalStepper
-                      milestones={MILESTONES}
-                      activeIdx={activeIdx}
-                      eventsMap={eventsMap}
-                      lang={lang}
-                      accentHex={carColour}
-                    />
+                    <HorizontalStepper milestones={MILESTONES} activeIdx={activeIdx} eventsMap={eventsMap} lang={lang} />
                   </div>
                   <div className="cv-stepper-v-wrap">
-                    <VerticalStepper
-                      milestones={MILESTONES}
-                      activeIdx={activeIdx}
-                      eventsMap={eventsMap}
-                      lang={lang}
-                      accentHex={carColour}
-                    />
+                    <VerticalStepper milestones={MILESTONES} activeIdx={activeIdx} eventsMap={eventsMap} lang={lang} />
                   </div>
 
-                  {/* Ocean transit inline panel */}
                   {isOcean && (
                     <div style={{
-                      marginTop: 24,
-                      padding: 16,
+                      marginTop: 24, padding: 16,
                       background: 'rgba(28,105,212,0.06)',
                       borderRadius: 10,
-                      border: `1px solid ${carColour}33`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 16,
-                      flexWrap: 'wrap',
+                      border: `1px solid ${C.primary}33`,
                     }}>
-                      <div className="cv-ocean-drift">
-                        <CarPhoto
-                          src={photoUrl}
-                          hex={carColour}
-                          width={typeof window !== 'undefined' && window.innerWidth < 768 ? 110 : 170}
-                        />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
-                          🌊 Your vehicle is at sea
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>🌊 Your vehicle is at sea</div>
+                      {oceanEvent?.vesselName && (
+                        <div className="cv-text-sm cv-text-muted">Aboard {oceanEvent.vesselName}</div>
+                      )}
+                      {oceanEvent?.gpsLat != null && (
+                        <div className="cv-text-xs cv-text-dim" style={{ marginTop: 4 }}>
+                          📍 {oceanEvent.gpsLat.toFixed(3)}°, {oceanEvent.gpsLng.toFixed(3)}°
                         </div>
-                        {oceanEvent?.vesselName && (
-                          <div className="cv-text-sm cv-text-muted">
-                            Aboard {oceanEvent.vesselName}
-                          </div>
-                        )}
-                        {oceanEvent?.gpsLat != null && (
-                          <div className="cv-text-xs cv-text-dim" style={{ marginTop: 4 }}>
-                            📍 {oceanEvent.gpsLat.toFixed(3)}°, {oceanEvent.gpsLng.toFixed(3)}°
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -524,22 +345,18 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                         lat={oceanEvent.gpsLat}
                         lng={oceanEvent.gpsLng}
                         vesselName={oceanEvent.vesselName}
-                        carColour={carColour}
+                        carColour={C.primary}
                       />
                     </Suspense>
                   </div>
                 </div>
               )}
 
-              {/* ── Order details ── */}
+              {/* ── Order summary ── */}
               <div className="cv-section">
-                <p className="cv-section-title">{tr.configuration}</p>
+                <p className="cv-section-title">{tr.status}</p>
                 <div className="cv-card">
                   <div className="cv-detail-grid">
-                    <div>
-                      <div className="cv-detail-key">{tr.model}</div>
-                      <div className="cv-detail-value">{order.carModel}</div>
-                    </div>
                     <div>
                       <div className="cv-detail-key">{tr.totalPrice}</div>
                       <div className="cv-detail-value">{fmtPrice(order.totalPrice, lang)}</div>
@@ -559,22 +376,6 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                       </div>
                     )}
                   </div>
-
-                  {order.configuration && Object.keys(order.configuration).length > 0 && (
-                    <>
-                      <div className="cv-divider" />
-                      <div className="cv-detail-grid">
-                        {Object.entries(order.configuration).map(([key, val]) => (
-                          <div key={key}>
-                            <div className="cv-detail-key">{key}</div>
-                            <div className="cv-detail-value" style={{ fontSize: 13 }}>
-                              {Array.isArray(val) ? val.join(', ') : String(val)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
 
@@ -585,25 +386,18 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                   <div className="cv-card cv-card-sm" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                     {[...order.shipment.trackingEvents]
                       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                      .map((ev, i) => {
+                      .map((ev, i, arr) => {
                         const m = MILESTONES.find((x) => x.key === ev.milestone);
                         return (
                           <div
                             key={ev.id}
                             style={{
                               padding: '14px 0',
-                              borderBottom:
-                                i < order.shipment.trackingEvents.length - 1
-                                  ? '1px solid var(--cv-border-light)'
-                                  : 'none',
-                              display: 'flex',
-                              gap: 12,
-                              alignItems: 'flex-start',
+                              borderBottom: i < arr.length - 1 ? '1px solid var(--cv-border-light)' : 'none',
+                              display: 'flex', gap: 12, alignItems: 'flex-start',
                             }}
                           >
-                            <span style={{ fontSize: 18, marginTop: 1, flexShrink: 0 }}>
-                              {m?.icon ?? '📍'}
-                            </span>
+                            <span style={{ fontSize: 18, marginTop: 1, flexShrink: 0 }}>{m?.icon ?? '📍'}</span>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>
                                 {m ? milestoneLabel(m, lang) : ev.milestone}
@@ -612,9 +406,7 @@ export default function TrackingDashboard({ orderId, lang, setLang }) {
                                 {fmtDate(ev.timestamp, lang)}
                                 {ev.vesselName && ` · 🚢 ${ev.vesselName}`}
                                 {ev.gpsLat != null && (
-                                  <span>
-                                    {' · '}📍 {ev.gpsLat.toFixed(3)}°, {ev.gpsLng.toFixed(3)}°
-                                  </span>
+                                  <span> · 📍 {ev.gpsLat.toFixed(3)}°, {ev.gpsLng.toFixed(3)}°</span>
                                 )}
                               </div>
                               {ev.notes && <div className="cv-text-sm cv-text-muted">{ev.notes}</div>}

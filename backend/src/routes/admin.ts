@@ -1,23 +1,24 @@
 import { Router, Response } from 'express';
-import { Milestone } from '@prisma/client';
+import { FuelType, Transmission, ListingStatus, Milestone } from '@prisma/client';
 import { z } from 'zod';
 import { authenticate, requireAdmin, AuthRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { advanceMilestone } from '../services/milestoneService';
 import { fetchVesselPosition } from '../services/marineTraffic';
+import { calcFinalPrice } from './listings';
 
 const router = Router();
 
 router.use(authenticate, requireAdmin);
 
-// GET /api/admin/orders?page=1&limit=20&status=PENDING
-router.get('/orders', async (req: AuthRequest, res: Response): Promise<void> => {
-  const page = Math.max(1, parseInt(req.query.page as string) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
-  const skip = (page - 1) * limit;
+// ─── Orders ──────────────────────────────────────────────────────────────────
 
+router.get('/orders', async (req: AuthRequest, res: Response): Promise<void> => {
+  const page   = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit  = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const skip   = (page - 1) * limit;
   const statusFilter = req.query.status as string | undefined;
-  const where = statusFilter ? { status: statusFilter as any } : {};
+  const where  = statusFilter ? { status: statusFilter as any } : {};
 
   const [orders, total] = await prisma.$transaction([
     prisma.order.findMany({
@@ -40,59 +41,40 @@ router.get('/orders', async (req: AuthRequest, res: Response): Promise<void> => 
     prisma.order.count({ where }),
   ]);
 
-  res.json({
-    orders,
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit),
-  });
+  res.json({ orders, total, page, limit, totalPages: Math.ceil(total / limit) });
 });
 
-// GET /api/admin/orders/:orderId — full order detail for admin
 router.get('/orders/:orderId', async (req: AuthRequest, res: Response): Promise<void> => {
   const order = await prisma.order.findUnique({
     where: { id: req.params.orderId },
     include: {
-      user: { select: { id: true, email: true, name: true, createdAt: true } },
-      shipment: {
-        include: {
-          trackingEvents: { orderBy: { timestamp: 'desc' } },
-        },
-      },
+      user:    { select: { id: true, email: true, name: true, createdAt: true } },
+      listing: { select: { id: true, make: true, model: true, year: true } },
+      shipment: { include: { trackingEvents: { orderBy: { timestamp: 'desc' } } } },
     },
   });
 
-  if (!order) {
-    res.status(404).json({ error: 'Order not found' });
-    return;
-  }
-
+  if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
   res.json(order);
 });
 
 const milestoneSchema = z.object({
-  milestone: z.nativeEnum(Milestone),
-  notes: z.string().max(1000).optional(),
-  gpsLat: z.number().min(-90).max(90).optional(),
-  gpsLng: z.number().min(-180).max(180).optional(),
-  vesselName: z.string().max(200).optional(),
-  vesselImo: z.string().max(20).optional(),
+  milestone:    z.nativeEnum(Milestone),
+  notes:        z.string().max(1000).optional(),
+  gpsLat:       z.number().min(-90).max(90).optional(),
+  gpsLng:       z.number().min(-180).max(180).optional(),
+  vesselName:   z.string().max(200).optional(),
+  vesselImo:    z.string().max(20).optional(),
   billOfLading: z.string().max(100).optional(),
 });
 
-// POST /api/admin/shipments/:shipmentId/milestone
 router.post('/shipments/:shipmentId/milestone', async (req: AuthRequest, res: Response): Promise<void> => {
   const parsed = milestoneSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
 
   const { shipmentId } = req.params;
   const { milestone, notes, gpsLat, gpsLng, vesselName, vesselImo, billOfLading } = parsed.data;
 
-  // Update optional shipment fields before advancing milestone
   if (vesselImo !== undefined || billOfLading !== undefined) {
     const data: Record<string, unknown> = {};
     if (vesselImo    !== undefined) data.vesselImo    = vesselImo;
@@ -103,42 +85,27 @@ router.post('/shipments/:shipmentId/milestone', async (req: AuthRequest, res: Re
   const advanced = await advanceMilestone({ shipmentId, milestone, notes, gpsLat, gpsLng, vesselName });
 
   if (advanced === false) {
-    // advanceMilestone returns false when shipment not found OR milestone already reached
     const exists = await prisma.shipment.findUnique({ where: { id: shipmentId }, select: { id: true } });
-    if (!exists) {
-      res.status(404).json({ error: 'Shipment not found' });
-      return;
-    }
+    if (!exists) { res.status(404).json({ error: 'Shipment not found' }); return; }
   }
 
   res.json({ success: true, advanced });
 });
 
-// POST /api/admin/shipments/:shipmentId/refresh-vessel
 router.post('/shipments/:shipmentId/refresh-vessel', async (req: AuthRequest, res: Response): Promise<void> => {
   const shipment = await prisma.shipment.findUnique({
     where: { id: req.params.shipmentId },
     select: { id: true, vesselImo: true, currentMilestone: true },
   });
 
-  if (!shipment) {
-    res.status(404).json({ error: 'Shipment not found' });
-    return;
-  }
-
-  if (!shipment.vesselImo) {
-    res.status(422).json({ error: 'Shipment has no vesselImo set' });
-    return;
-  }
+  if (!shipment) { res.status(404).json({ error: 'Shipment not found' }); return; }
+  if (!shipment.vesselImo) { res.status(422).json({ error: 'Shipment has no vesselImo set' }); return; }
 
   try {
     const position = await fetchVesselPosition(shipment.vesselImo);
 
     if (!position) {
-      await prisma.shipment.update({
-        where: { id: shipment.id },
-        data:  { marineTrafficError: true },
-      });
+      await prisma.shipment.update({ where: { id: shipment.id }, data: { marineTrafficError: true } });
       res.status(502).json({ error: 'No position data returned by MarineTraffic' });
       return;
     }
@@ -154,54 +121,35 @@ router.post('/shipments/:shipmentId/refresh-vessel', async (req: AuthRequest, re
       },
     });
 
-    await prisma.shipment.update({
-      where: { id: shipment.id },
-      data:  { marineTrafficError: false },
-    });
-
+    await prisma.shipment.update({ where: { id: shipment.id }, data: { marineTrafficError: false } });
     res.json({ position });
   } catch (err) {
-    await prisma.shipment.update({
-      where: { id: shipment.id },
-      data:  { marineTrafficError: true },
-    });
+    await prisma.shipment.update({ where: { id: shipment.id }, data: { marineTrafficError: true } });
     throw err;
   }
 });
 
-// GET /api/admin/shipments — list all shipments
 router.get('/shipments', async (_req: AuthRequest, res: Response): Promise<void> => {
   const shipments = await prisma.shipment.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-      order: {
-        include: { user: { select: { id: true, email: true, name: true } } },
-      },
+      order: { include: { user: { select: { id: true, email: true, name: true } } } },
       trackingEvents: { orderBy: { timestamp: 'desc' }, take: 1 },
     },
   });
-
   res.json(shipments);
 });
 
-// POST /api/admin/orders/:orderId/shipment — create a shipment for an order
 router.post('/orders/:orderId/shipment', async (req: AuthRequest, res: Response): Promise<void> => {
-  const shipmentCreateSchema = z.object({
+  const parsed = z.object({
     billOfLading: z.string().max(100).optional(),
-    vesselImo: z.string().max(20).optional(),
-  });
+    vesselImo:    z.string().max(20).optional(),
+  }).safeParse(req.body);
 
-  const parsed = shipmentCreateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
 
   const order = await prisma.order.findUnique({ where: { id: req.params.orderId } });
-  if (!order) {
-    res.status(404).json({ error: 'Order not found' });
-    return;
-  }
+  if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
 
   const existing = await prisma.shipment.findUnique({ where: { orderId: order.id } });
   if (existing) {
@@ -210,23 +158,77 @@ router.post('/orders/:orderId/shipment', async (req: AuthRequest, res: Response)
   }
 
   const shipment = await prisma.shipment.create({
-    data: {
-      orderId: order.id,
-      billOfLading: parsed.data.billOfLading,
-      vesselImo: parsed.data.vesselImo,
-    },
+    data: { orderId: order.id, ...parsed.data },
   });
 
   await prisma.trackingEvent.create({
-    data: {
-      shipmentId: shipment.id,
-      milestone: Milestone.PURCHASED,
-      timestamp: new Date(),
-      notes: 'Shipment record created.',
-    },
+    data: { shipmentId: shipment.id, milestone: Milestone.PURCHASED, timestamp: new Date(), notes: 'Shipment record created.' },
   });
 
   res.status(201).json(shipment);
+});
+
+// ─── Listings ─────────────────────────────────────────────────────────────────
+
+const listingSchema = z.object({
+  make:         z.string().min(1).max(100),
+  model:        z.string().min(1).max(200),
+  year:         z.number().int().min(2000).max(new Date().getFullYear() + 2),
+  mileage:      z.number().int().min(0).default(0),
+  condition:    z.enum(['NEW', 'USED']).default('NEW'),
+  fuelType:     z.nativeEnum(FuelType),
+  transmission: z.nativeEnum(Transmission),
+  power:        z.number().int().min(1).optional(),
+  engineSize:   z.number().positive().optional(),
+  color:        z.string().max(100).optional(),
+  bodyType:     z.string().max(100).optional(),
+  photos:       z.array(z.string()).min(1),
+  basePrice:    z.number().positive(),
+  shippingCost: z.number().positive().default(1200),
+  taxRate:      z.number().min(0).max(1).default(0.14),
+  customsRate:  z.number().min(0).max(1).default(0.05),
+  status:       z.nativeEnum(ListingStatus).default(ListingStatus.AVAILABLE),
+  sourceUrl:    z.string().optional(),
+  sourceSite:   z.string().max(100).optional(),
+  features:     z.array(z.string()).optional(),
+  mjPrompt:     z.string().max(1000).optional(),
+});
+
+router.get('/listings', async (_req: AuthRequest, res: Response): Promise<void> => {
+  const listings = await prisma.carListing.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json(listings);
+});
+
+router.post('/listings', async (req: AuthRequest, res: Response): Promise<void> => {
+  const parsed = listingSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+
+  const listing = await prisma.carListing.create({ data: parsed.data as any });
+  res.status(201).json(listing);
+});
+
+router.put('/listings/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  const parsed = listingSchema.partial().safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+
+  const existing = await prisma.carListing.findUnique({ where: { id: req.params.id } });
+  if (!existing) { res.status(404).json({ error: 'Listing not found' }); return; }
+
+  const listing = await prisma.carListing.update({
+    where: { id: req.params.id },
+    data:  parsed.data as any,
+  });
+  res.json(listing);
+});
+
+router.delete('/listings/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  const existing = await prisma.carListing.findUnique({ where: { id: req.params.id } });
+  if (!existing) { res.status(404).json({ error: 'Listing not found' }); return; }
+
+  await prisma.carListing.delete({ where: { id: req.params.id } });
+  res.json({ success: true });
 });
 
 export default router;

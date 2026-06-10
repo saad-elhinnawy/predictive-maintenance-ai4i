@@ -26,11 +26,19 @@ export default function NavBar({ lang, setLang, showBack = false, title = '' }) 
               </button>
             )}
             <Brand />
-            {title && (
+            {title ? (
               <>
                 <span style={{ color: 'var(--cv-border)', userSelect: 'none' }}>/</span>
                 <span className="cv-navbar-title">{title}</span>
               </>
+            ) : (
+              <button
+                className="cv-btn cv-btn-ghost cv-btn-sm"
+                onClick={() => (window.location.hash = '#/catalogue')}
+                style={{ marginInlineStart: 4 }}
+              >
+                {tr.catalogue}
+              </button>
             )}
           </div>
 
