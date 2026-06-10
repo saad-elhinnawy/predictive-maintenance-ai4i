@@ -1,0 +1,10 @@
+{
+  "name": "bmw-export",
+  "version": "1.0.0",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "npm --prefix backend install && npm --prefix backend run build",
+    "start": "npm --prefix backend start"
+  }
+}
