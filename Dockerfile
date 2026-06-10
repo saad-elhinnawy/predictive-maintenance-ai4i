@@ -1,32 +1,41 @@
-FROM node:20-slim
+# ── Build stage ───────────────────────────────────────────────────────────────
+FROM node:20 AS builder
 
 WORKDIR /app
 
-# ── Install deps ──────────────────────────────────────────────────────────────
 COPY backend/package*.json backend/
 RUN npm --prefix backend install
 
 COPY frontend/package*.json frontend/
 RUN npm --prefix frontend install
 
-# ── Copy source ───────────────────────────────────────────────────────────────
 COPY . .
 
-# ── Build frontend ────────────────────────────────────────────────────────────
+# Build frontend
 WORKDIR /app/frontend
 RUN npm run build
 
-# ── Generate Prisma client ────────────────────────────────────────────────────
+# Generate Prisma client + compile TypeScript
 WORKDIR /app/backend
 RUN npx prisma generate
-
-# ── Compile TypeScript ────────────────────────────────────────────────────────
 RUN npx tsc
 
-# ── Prune backend devDeps ─────────────────────────────────────────────────────
-RUN npm prune --production
+# Prune devDeps so we only copy production node_modules
+RUN npm prune --omit=dev
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM node:20-slim AS runtime
 
 WORKDIR /app
+
+# Copy backend: production node_modules + compiled dist + prisma artifacts
+COPY --from=builder /app/backend/node_modules  backend/node_modules
+COPY --from=builder /app/backend/dist          backend/dist
+COPY --from=builder /app/backend/prisma        backend/prisma
+COPY --from=builder /app/backend/package.json  backend/package.json
+
+# Copy built frontend static files
+COPY --from=builder /app/frontend/dist         frontend/dist
 
 EXPOSE 4000
 
