@@ -1,25 +1,32 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package manifests first for layer caching
+# ── Install deps ──────────────────────────────────────────────────────────────
 COPY backend/package*.json backend/
-COPY frontend/package*.json frontend/
-
-# Install ALL deps (dev included — needed for tsc and vite)
-# No NODE_ENV override needed: Docker build env is separate from runtime env vars
 RUN npm --prefix backend install
+
+COPY frontend/package*.json frontend/
 RUN npm --prefix frontend install
 
-# Copy full source
+# ── Copy source ───────────────────────────────────────────────────────────────
 COPY . .
 
-# Build: npm run build runs build:frontend + prisma generate + tsc
-# npm --prefix sets CWD to backend/, so all relative paths work correctly
-RUN npm --prefix backend run build
+# ── Build frontend ────────────────────────────────────────────────────────────
+WORKDIR /app/frontend
+RUN npm run build
 
-# Remove devDeps from backend for a leaner runtime image
-RUN npm --prefix backend prune --production
+# ── Generate Prisma client ────────────────────────────────────────────────────
+WORKDIR /app/backend
+RUN npx prisma generate
+
+# ── Compile TypeScript ────────────────────────────────────────────────────────
+RUN npx tsc
+
+# ── Prune backend devDeps ─────────────────────────────────────────────────────
+RUN npm prune --production
+
+WORKDIR /app
 
 EXPOSE 4000
 
