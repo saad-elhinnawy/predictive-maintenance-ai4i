@@ -5,7 +5,10 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["NODE_ENV=development npm --prefix backend run build"]
+cmds = [
+  "npm --prefix frontend run build",
+  "cd backend && npx prisma generate && npx tsc"
+]
 
 [start]
-cmd = "npm --prefix backend start"
+cmd = "cd backend && node dist/server.js"
