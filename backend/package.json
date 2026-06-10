@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "npm run build:frontend && npx prisma generate && tsc && tsc -p tsconfig.seed.json",
+    "build": "npm run build:frontend && npx prisma generate && tsc",
     "build:frontend": "cd ../frontend && npm install && npm run build",
-    "start": "npx prisma migrate resolve --rolled-back 20260610130000_add_customer_fields_to_order 2>/dev/null; npx prisma migrate deploy && node dist/seed.js && node dist/server.js",
+    "start": "npx prisma migrate resolve --rolled-back 20260610130000_add_customer_fields_to_order 2>/dev/null; npx prisma migrate deploy && node prisma/seed.js && node dist/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -39,6 +39,6 @@
     "typescript": "^5.4.5"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "node prisma/seed.js"
   }
 }
