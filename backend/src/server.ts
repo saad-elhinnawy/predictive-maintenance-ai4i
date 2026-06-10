@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -29,9 +31,18 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({ error: 'Not found' });
-});
+// Serve frontend in production
+const frontendDist = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+} else {
+  app.use((_req: Request, res: Response) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+}
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
