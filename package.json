@@ -4,7 +4,7 @@
   "private": true,
   "engines": { "node": ">=20" },
   "scripts": {
-    "build": "npm --prefix backend install && npm --prefix backend run build",
+    "build": "NODE_ENV=development npm --prefix backend install && NODE_ENV=development npm --prefix backend run build",
     "start": "npm --prefix backend start"
   }
 }
