@@ -1,280 +1,229 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
-import { t, C, calcFinalPrice } from '../constants';
+import Footer from '../components/Footer';
+import { calcFinalPrice, fmtPrice } from '../constants/index.js';
 
-function fmtPrice(n, lang) {
-  return new Intl.NumberFormat(
-    lang === 'ar' ? 'ar-SA' : lang === 'de' ? 'de-DE' : 'en-US',
-    { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 },
-  ).format(n);
-}
+const FUEL_LABELS = { PETROL: 'Petrol', DIESEL: 'Diesel', HYBRID: 'Hybrid', ELECTRIC: 'Electric' };
 
 function PhotoGallery({ photos }) {
-  const [active, setActive]   = useState(0);
-  const [overlay, setOverlay] = useState(false);
-  const stripRef = useRef(null);
+  const [idx, setIdx] = useState(0);
+  if (!photos || photos.length === 0) return (
+    <div className="ed-detail-gallery" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ed-bg-soft)' }}>
+      <span style={{ fontSize: 48, color: 'var(--ed-text-light)' }}>🚗</span>
+    </div>
+  );
 
-  const photos_ = Array.isArray(photos) ? photos : [];
-
-  if (photos_.length === 0) {
-    return (
-      <div className="cv-gallery-empty">
-        <span style={{ fontSize: 64 }}>🚗</span>
-      </div>
-    );
-  }
+  const prev = () => setIdx(i => (i - 1 + photos.length) % photos.length);
+  const next = () => setIdx(i => (i + 1) % photos.length);
 
   return (
-    <>
-      <div className="cv-gallery">
-        <div className="cv-gallery-main" onClick={() => setOverlay(true)} title="Click to enlarge">
-          <img src={photos_[active]} alt="Vehicle" />
-          <div className="cv-gallery-zoom">⤢</div>
-        </div>
-
-        {photos_.length > 1 && (
-          <div className="cv-gallery-strip" ref={stripRef}>
-            {photos_.map((p, i) => (
-              <button
-                key={i}
-                className={`cv-gallery-thumb${active === i ? ' active' : ''}`}
-                onClick={() => setActive(i)}
-              >
-                <img src={p} alt={`Photo ${i + 1}`} />
-              </button>
+    <div className="ed-detail-gallery">
+      <img className="ed-gallery-img" src={photos[idx]} alt={`Photo ${idx + 1}`} />
+      {photos.length > 1 && (
+        <>
+          <button className="ed-gallery-nav ed-gallery-prev" onClick={prev}>‹</button>
+          <button className="ed-gallery-nav ed-gallery-next" onClick={next}>›</button>
+          <div className="ed-gallery-dots">
+            {photos.map((_, i) => (
+              <button key={i} className={`ed-gallery-dot ${i === idx ? 'active' : ''}`} onClick={() => setIdx(i)} />
             ))}
           </div>
-        )}
-      </div>
-
-      {overlay && (
-        <div className="cv-gallery-overlay" onClick={() => setOverlay(false)}>
-          <div className="cv-gallery-overlay-inner" onClick={(e) => e.stopPropagation()}>
-            <img src={photos_[active]} alt="Vehicle" />
-            <div className="cv-gallery-overlay-nav">
-              {photos_.length > 1 && (
-                <>
-                  <button onClick={() => setActive((a) => (a - 1 + photos_.length) % photos_.length)}>‹</button>
-                  <span>{active + 1} / {photos_.length}</span>
-                  <button onClick={() => setActive((a) => (a + 1) % photos_.length)}>›</button>
-                </>
-              )}
-              <button style={{ marginInlineStart: 'auto' }} onClick={() => setOverlay(false)}>✕</button>
-            </div>
-          </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }
 
 function SpecRow({ label, value }) {
   if (!value && value !== 0) return null;
   return (
-    <div className="cv-spec-row">
-      <span className="cv-spec-key">{label}</span>
-      <span className="cv-spec-val">{value}</span>
+    <div className="ed-spec-row">
+      <span className="ed-spec-key">{label}</span>
+      <span className="ed-spec-val">{value}</span>
     </div>
   );
 }
 
-export default function CarDetailPage({ listingId, lang, setLang }) {
-  const tr    = t[lang];
-  const isRtl = lang === 'ar';
+function OrderForm({ listing }) {
+  const [form, setForm]     = useState({ customerName: '', customerEmail: '', customerPhone: '' });
+  const [loading, setLoading] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  const [error, setError]   = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const [listing,  setListing]  = useState(null);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
-  const [ordering, setOrdering] = useState(false);
-  const [ordered,  setOrdered]  = useState(false);
+  function onChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })); }
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      const r = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: listing.id, ...form }),
+      });
+      const data = await r.json();
+      if (!r.ok) { setError(data.error?.message || 'Failed to place order'); return; }
+      setOrderId(data.orderId);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function copy() {
+    navigator.clipboard.writeText(orderId).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (orderId) return (
+    <div className="ed-order-result">
+      <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: '#065F46' }}>Reservation received!</div>
+      <div style={{ fontSize: 13, color: '#065F46', marginTop: 4 }}>Save your tracking number:</div>
+      <div className="ed-order-id">{orderId}</div>
+      <button className="ed-copy-btn" onClick={copy}>
+        {copied ? '✓ Copied!' : '📋 Copy'}
+      </button>
+      <div style={{ fontSize: 12, color: '#065F46', marginTop: 12 }}>
+        Use this number at <a href="#/track" style={{ color: '#065F46', textDecoration: 'underline' }}>Track Order</a> to follow your shipment.
+      </div>
+    </div>
+  );
+
+  return (
+    <form className="ed-order-form" onSubmit={onSubmit}>
+      <div className="ed-form-group">
+        <label className="ed-label-text">Full Name</label>
+        <input className="ed-input" name="customerName" placeholder="Your name" value={form.customerName} onChange={onChange} required />
+      </div>
+      <div className="ed-form-group">
+        <label className="ed-label-text">Email Address</label>
+        <input className="ed-input" name="customerEmail" type="email" placeholder="your@email.com" value={form.customerEmail} onChange={onChange} required />
+      </div>
+      <div className="ed-form-group">
+        <label className="ed-label-text">Phone Number</label>
+        <input className="ed-input" name="customerPhone" placeholder="+20 xxx xxx xxxx" value={form.customerPhone} onChange={onChange} required />
+      </div>
+      {error && <p style={{ color: 'var(--ed-error)', fontSize: 13 }}>{error}</p>}
+      <button type="submit" className="ed-btn ed-btn-primary ed-btn-full ed-btn-lg" disabled={loading}>
+        {loading ? 'Processing…' : '🚗 Reserve This Vehicle'}
+      </button>
+      <p style={{ fontSize: 12, color: 'var(--ed-text-muted)', textAlign: 'center' }}>
+        No payment required now. Our team will contact you within 24 hours.
+      </p>
+    </form>
+  );
+}
+
+export default function CarDetailPage({ listingId }) {
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
 
   useEffect(() => {
     fetch(`/api/listings/${listingId}`)
-      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then((d) => { setListing(d); setError(null); })
-      .catch((code) => setError(code === 404 ? tr.noOrder : tr.errorFetch))
-      .finally(() => setLoading(false));
-  }, [listingId, tr.noOrder, tr.errorFetch]);
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(d => { setListing(d); setLoading(false); })
+      .catch(() => { setError('Vehicle not found.'); setLoading(false); });
+  }, [listingId]);
 
-  async function handleOrder() {
-    const token = localStorage.getItem('bmw_token');
-    if (!token) {
-      window.location.hash = `#/login?next=${encodeURIComponent(`#/cars/${listingId}`)}`;
-      return;
-    }
-    setOrdering(true);
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ listingId }),
-      });
-      if (res.status === 401) {
-        localStorage.removeItem('bmw_token');
-        window.location.hash = '#/login';
-        return;
-      }
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || 'Order failed');
-        return;
-      }
-      const data = await res.json();
-      setOrdered(true);
-      setTimeout(() => { window.location.hash = `#/tracking/${data.orderId}`; }, 1500);
-    } catch {
-      alert(tr.errorFetch);
-    } finally {
-      setOrdering(false);
-    }
-  }
+  const finalPrice = listing
+    ? calcFinalPrice(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate)
+    : 0;
 
-  if (loading) {
-    return (
-      <div className="cv-page">
-        <NavBar lang={lang} setLang={setLang} showBack />
-        <main className="cv-main">
-          <div className="cv-container">
-            <div className="cv-skeleton" style={{ height: 380, borderRadius: 12, marginBottom: 24 }} />
-            <div className="cv-skeleton" style={{ height: 200, borderRadius: 12 }} />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error || !listing) {
-    return (
-      <div className="cv-page">
-        <NavBar lang={lang} setLang={setLang} showBack />
-        <main className="cv-main">
-          <div className="cv-flex-center cv-col" style={{ minHeight: 320, gap: 16, color: C.textDim }}>
-            <div style={{ fontSize: 48 }}>🚗</div>
-            <p>{error || tr.noOrder}</p>
-            <button className="cv-btn cv-btn-ghost" onClick={() => (window.location.hash = '#/catalogue')}>
-              {tr.back}
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  const finalPrice    = calcFinalPrice(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate);
-  const dutyAmount    = Math.round(listing.basePrice * (listing.taxRate + listing.customsRate));
-  const serviceFee    = Math.round(listing.basePrice * 0.3);
-  const isAvailable   = listing.status === 'AVAILABLE';
-  const features      = Array.isArray(listing.features) ? listing.features : [];
+  const photos   = listing ? (Array.isArray(listing.photos) ? listing.photos : []) : [];
+  const features = listing?.features ? (Array.isArray(listing.features) ? listing.features : []) : [];
 
   return (
-    <div className="cv-page" dir={isRtl ? 'rtl' : 'ltr'}>
-      <NavBar
-        lang={lang}
-        setLang={setLang}
-        showBack
-        title={`${listing.year} ${listing.make} ${listing.model}`}
-      />
+    <div className="ed-page">
+      <TopBar />
+      <NavBar />
+      <main className="ed-main">
 
-      <main className="cv-main">
-        <div className="cv-container cv-detail-layout">
-
-          {/* Left: gallery */}
-          <div className="cv-detail-left">
-            <PhotoGallery photos={listing.photos} />
-
-            {/* Source badge */}
-            {listing.sourceSite && (
-              <div className="cv-source-tag">
-                {tr.sourceLabel}: <strong>{listing.sourceSite}</strong>
-              </div>
-            )}
+        {loading && (
+          <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ed-text-muted)' }}>
+            Loading vehicle details…
           </div>
+        )}
 
-          {/* Right: info + price + CTA */}
-          <div className="cv-detail-right">
-            <div style={{ marginBottom: 4 }}>
-              <span className={`cv-badge ${listing.condition === 'NEW' ? 'cv-badge-blue' : 'cv-badge-yellow'}`}>
-                {listing.condition === 'NEW' ? tr.newCars : tr.usedCars}
-              </span>
-            </div>
-
-            <h1 className="cv-h1" style={{ marginBottom: 4 }}>
-              {listing.make} {listing.model}
-            </h1>
-            <div style={{ fontSize: 20, color: C.textMuted, marginBottom: 24 }}>{listing.year}</div>
-
-            {/* Specs */}
-            <div className="cv-section">
-              <p className="cv-section-title">{tr.specs}</p>
-              <div className="cv-card cv-card-sm">
-                <SpecRow label={tr.fuel}      value={listing.fuelType} />
-                <SpecRow label={tr.gearbox}   value={listing.transmission} />
-                {listing.power && <SpecRow label={tr.power} value={`${listing.power} ${tr.hp}`} />}
-                {listing.engineSize && <SpecRow label="Engine" value={`${listing.engineSize}L`} />}
-                <SpecRow label={tr.mileage}   value={listing.mileage > 0 ? `${listing.mileage.toLocaleString()} ${tr.km}` : `0 ${tr.km} — New`} />
-                <SpecRow label={tr.color}     value={listing.color} />
-                <SpecRow label={tr.bodyType}  value={listing.bodyType} />
-              </div>
-            </div>
-
-            {/* Features */}
-            {features.length > 0 && (
-              <div className="cv-section">
-                <p className="cv-section-title">{tr.features}</p>
-                <div className="cv-features-list">
-                  {features.map((f) => (
-                    <span key={f} className="cv-feature-chip">{f}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Price breakdown */}
-            <div className="cv-section">
-              <p className="cv-section-title">{tr.priceBreakdown}</p>
-              <div className="cv-card cv-price-card">
-                <div className="cv-price-row">
-                  <span>{tr.dealerPrice}</span>
-                  <span>{fmtPrice(listing.basePrice, lang)}</span>
-                </div>
-                <div className="cv-price-row">
-                  <span>{tr.shipping}</span>
-                  <span>{fmtPrice(listing.shippingCost, lang)}</span>
-                </div>
-                <div className="cv-price-row">
-                  <span>{tr.importDuties} ({Math.round((listing.taxRate + listing.customsRate) * 100)}%)</span>
-                  <span>{fmtPrice(dutyAmount, lang)}</span>
-                </div>
-                <div className="cv-price-row">
-                  <span>{tr.serviceFee}</span>
-                  <span>{fmtPrice(serviceFee, lang)}</span>
-                </div>
-                <div className="cv-price-divider" />
-                <div className="cv-price-row cv-price-total">
-                  <span>{tr.finalPrice}</span>
-                  <span>{fmtPrice(finalPrice, lang)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            {isAvailable ? (
-              <button
-                className="cv-btn cv-btn-primary"
-                style={{ width: '100%', padding: '14px 24px', fontSize: 16 }}
-                onClick={handleOrder}
-                disabled={ordering || ordered}
-              >
-                {ordered ? tr.orderSuccess : ordering ? tr.loading : tr.orderNow}
-              </button>
-            ) : (
-              <div className="cv-sold-banner">
-                <span>SOLD</span>
-              </div>
-            )}
+        {error && (
+          <div style={{ padding: '80px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{error}</div>
+            <a href="#/vehicles" className="ed-btn ed-btn-primary">Browse All Vehicles</a>
           </div>
-        </div>
+        )}
+
+        {listing && (
+          <>
+            <PhotoGallery photos={photos} />
+
+            <div className="ed-detail-body">
+              {/* Title */}
+              <div>
+                <div className="ed-badge ed-badge-new" style={{ marginBottom: 10 }}>NEW</div>
+                <h1 className="ed-h2">{listing.year} {listing.make} {listing.model}</h1>
+                {listing.color && (
+                  <p className="ed-muted" style={{ marginTop: 4, fontSize: 14 }}>{listing.color}</p>
+                )}
+              </div>
+
+              {/* Price card */}
+              <div className="ed-price-card">
+                <div className="ed-price-label">All-inclusive import price</div>
+                <div className="ed-price-value">{fmtPrice(finalPrice)}</div>
+                <div className="ed-price-note">Includes shipping, customs duties & import fees. No hidden costs.</div>
+              </div>
+
+              {/* Specs */}
+              <div className="ed-card">
+                <div className="ed-h3" style={{ marginBottom: 12 }}>Specifications</div>
+                <SpecRow label="Year"         value={listing.year} />
+                <SpecRow label="Mileage"      value={listing.mileage === 0 ? '0 km (brand new)' : `${listing.mileage.toLocaleString()} km`} />
+                <SpecRow label="Fuel Type"    value={FUEL_LABELS[listing.fuelType] || listing.fuelType} />
+                <SpecRow label="Transmission" value={listing.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'} />
+                {listing.power     && <SpecRow label="Power"       value={`${listing.power} hp`} />}
+                {listing.engineSize && <SpecRow label="Engine"      value={`${listing.engineSize}L`} />}
+                {listing.color     && <SpecRow label="Colour"      value={listing.color} />}
+                {listing.bodyType  && <SpecRow label="Body Type"   value={listing.bodyType} />}
+                <SpecRow label="Condition" value="Brand New" />
+              </div>
+
+              {/* Features */}
+              {features.length > 0 && (
+                <div className="ed-card">
+                  <div className="ed-h3" style={{ marginBottom: 12 }}>Key Features</div>
+                  <div className="ed-features-chips">
+                    {features.map(f => <span className="ed-chip" key={f}>{f}</span>)}
+                  </div>
+                </div>
+              )}
+
+              {/* Order form */}
+              <div className="ed-card">
+                <div className="ed-h3" style={{ marginBottom: 6 }}>Reserve This Vehicle</div>
+                <p className="ed-muted" style={{ fontSize: 13, marginBottom: 20 }}>
+                  Fill in your details and our team will contact you within 24 hours to confirm your order.
+                </p>
+                {listing.status !== 'AVAILABLE' ? (
+                  <div style={{ padding: 16, background: '#FEF3C7', borderRadius: 10, fontSize: 14, color: '#92400E' }}>
+                    This vehicle is currently {listing.status.toLowerCase()}. Contact us for availability.
+                  </div>
+                ) : (
+                  <OrderForm listing={listing} />
+                )}
+              </div>
+
+            </div>
+          </>
+        )}
+
       </main>
+      <Footer />
     </div>
   );
 }

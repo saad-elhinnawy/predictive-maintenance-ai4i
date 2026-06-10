@@ -92,14 +92,17 @@ model CarListing {
 
 model Order {
   id            String      @id @default(cuid())
-  userId        String
+  userId        String?
   listingId     String?
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
   carModel      String
   configuration Json
   totalPrice    Float
   status        OrderStatus @default(PENDING)
   createdAt     DateTime    @default(now()) @map("created_at")
-  user          User        @relation(fields: [userId], references: [id])
+  user          User?       @relation(fields: [userId], references: [id])
   listing       CarListing? @relation(fields: [listingId], references: [id])
   shipment      Shipment?
 

@@ -99,14 +99,25 @@ export async function advanceMilestone(input: AdvanceMilestoneInput): Promise<bo
   }
 
   // Fire-and-forget email
-  sendMilestoneUpdate({
-    email:         shipment.order.user.email,
-    name:          shipment.order.user.name,
-    carModel:      shipment.order.carModel,
-    orderId:       shipment.orderId,
-    milestone,
-    nextMilestone,
-  }).catch((err) => console.error('[milestoneService] Email error:', err));
+  if (shipment.order.user) {
+    sendMilestoneUpdate({
+      email:         shipment.order.user.email,
+      name:          shipment.order.user.name,
+      carModel:      shipment.order.carModel,
+      orderId:       shipment.orderId,
+      milestone,
+      nextMilestone,
+    }).catch((err) => console.error('[milestoneService] Email error:', err));
+  } else if (shipment.order.customerEmail) {
+    sendMilestoneUpdate({
+      email:         shipment.order.customerEmail,
+      name:          shipment.order.customerName ?? 'Customer',
+      carModel:      shipment.order.carModel,
+      orderId:       shipment.orderId,
+      milestone,
+      nextMilestone,
+    }).catch((err) => console.error('[milestoneService] Email error:', err));
+  }
 
   console.info(
     `[milestoneService] ${shipment.order.carModel} (${shipmentId}) ` +

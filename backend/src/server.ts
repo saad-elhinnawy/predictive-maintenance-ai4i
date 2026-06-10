@@ -8,9 +8,9 @@ import helmet from 'helmet';
 import authRoutes     from './routes/auth';
 import ordersRoutes   from './routes/orders';
 import adminRoutes    from './routes/admin';
-import webhookRoutes  from './routes/webhooks';
 import listingsRoutes from './routes/listings';
-import { startVesselPollerCron } from './jobs/vesselPoller';
+import trackRoutes    from './routes/track';
+import contactRoutes  from './routes/contact';
 
 const app = express();
 
@@ -24,14 +24,14 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth',     authRoutes);
 app.use('/api/orders',   ordersRoutes);
 app.use('/api/admin',    adminRoutes);
-app.use('/api/webhooks', webhookRoutes);
 app.use('/api/listings', listingsRoutes);
+app.use('/api/track',    trackRoutes);
+app.use('/api/contact',  contactRoutes);
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve frontend in production
 const frontendDist = path.join(__dirname, '../../frontend/dist');
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
@@ -55,8 +55,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 
 const PORT = parseInt(process.env.PORT || '4000', 10);
 app.listen(PORT, () => {
-  console.log(`BMW Export API running on port ${PORT} [${process.env.NODE_ENV ?? 'development'}]`);
-  startVesselPollerCron();
+  console.log(`EuroDriveEgypt API running on port ${PORT} [${process.env.NODE_ENV ?? 'development'}]`);
 });
 
 export default app;
