@@ -1,5 +1,8 @@
 [phases.install]
-cmds = ["NODE_ENV=development npm --prefix backend install"]
+cmds = [
+  "NODE_ENV=development npm --prefix backend install",
+  "NODE_ENV=development npm --prefix frontend install"
+]
 
 [phases.build]
 cmds = ["NODE_ENV=development npm --prefix backend run build"]
