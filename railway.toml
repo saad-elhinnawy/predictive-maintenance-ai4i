@@ -2,6 +2,7 @@
 builder = "DOCKERFILE"
 
 [deploy]
+startCommand = "node s.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
