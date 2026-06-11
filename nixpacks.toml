@@ -1,15 +1,2 @@
-[phases.install]
-cmds = [
-  "NODE_ENV=development npm --prefix backend install",
-  "NODE_ENV=development npm --prefix frontend install"
-]
-
-[phases.build]
-cmds = [
-  "npm --prefix frontend run build",
-  "cd backend && npx prisma generate",
-  "cd backend && npx tsc"
-]
-
 [start]
-cmd = "cd backend && node dist/server.js"
+cmd = "node server.js"
