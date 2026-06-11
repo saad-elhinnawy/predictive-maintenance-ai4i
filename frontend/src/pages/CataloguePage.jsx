@@ -25,6 +25,11 @@ function CarCard({ listing }) {
             Brand New
           </span>
         </div>
+        {listing.mjPrompt && (
+          <div className="ed-car-badge-tr">
+            <span className="ed-badge-featured">Featured</span>
+          </div>
+        )}
       </div>
       <div className="ed-car-info">
         <div className="ed-car-make">{listing.make}</div>

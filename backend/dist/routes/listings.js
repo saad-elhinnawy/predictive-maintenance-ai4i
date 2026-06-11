@@ -52,7 +52,7 @@ router.get('/', async (req, res, next) => {
                     transmission: true, power: true, color: true,
                     bodyType: true, photos: true, basePrice: true,
                     shippingCost: true, taxRate: true, customsRate: true,
-                    status: true,
+                    status: true, mjPrompt: true,
                 },
             }),
             prisma_1.default.carListing.count({ where }),

@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import Icon from '../components/Icon';
 import { calcFinalPrice, fmtPrice } from '../constants/index.js';
 
 const FUEL_LABELS = { PETROL: 'Petrol', DIESEL: 'Diesel', HYBRID: 'Hybrid', ELECTRIC: 'Electric' };
 
 function PhotoGallery({ photos }) {
   const [idx, setIdx] = useState(0);
+
   if (!photos || photos.length === 0) return (
     <div className="ed-detail-gallery" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ed-bg-soft)' }}>
-      <span style={{ fontSize: 48, color: 'var(--ed-text-light)' }}>🚗</span>
+      <Icon name="car" size={64} style={{ color: 'var(--ed-text-light)' }} />
     </div>
   );
 
@@ -46,11 +48,11 @@ function SpecRow({ label, value }) {
 }
 
 function OrderForm({ listing }) {
-  const [form, setForm]     = useState({ customerName: '', customerEmail: '', customerPhone: '' });
+  const [form, setForm]       = useState({ customerName: '', customerEmail: '', customerPhone: '' });
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState('');
-  const [error, setError]   = useState('');
-  const [copied, setCopied] = useState(false);
+  const [error, setError]     = useState('');
+  const [copied, setCopied]   = useState(false);
 
   function onChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })); }
 
@@ -81,12 +83,15 @@ function OrderForm({ listing }) {
 
   if (orderId) return (
     <div className="ed-order-result">
-      <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8, color: '#059669' }}>
+        <Icon name="check-circle" size={40} />
+      </div>
       <div style={{ fontSize: 15, fontWeight: 700, color: '#065F46' }}>Reservation received!</div>
       <div style={{ fontSize: 13, color: '#065F46', marginTop: 4 }}>Save your tracking number:</div>
       <div className="ed-order-id">{orderId}</div>
       <button className="ed-copy-btn" onClick={copy}>
-        {copied ? '✓ Copied!' : '📋 Copy'}
+        <Icon name="package" size={14} />
+        {copied ? 'Copied!' : 'Copy Number'}
       </button>
       <div style={{ fontSize: 12, color: '#065F46', marginTop: 12 }}>
         Use this number at <a href="#/track" style={{ color: '#065F46', textDecoration: 'underline' }}>Track Order</a> to follow your shipment.
@@ -110,7 +115,8 @@ function OrderForm({ listing }) {
       </div>
       {error && <p style={{ color: 'var(--ed-error)', fontSize: 13 }}>{error}</p>}
       <button type="submit" className="ed-btn ed-btn-primary ed-btn-full ed-btn-lg" disabled={loading}>
-        {loading ? 'Processing…' : '🚗 Reserve This Vehicle'}
+        <Icon name="car" size={18} />
+        {loading ? 'Processing…' : 'Reserve This Vehicle'}
       </button>
       <p style={{ fontSize: 12, color: 'var(--ed-text-muted)', textAlign: 'center' }}>
         No payment required now. Our team will contact you within 24 hours.
@@ -125,10 +131,13 @@ export default function CarDetailPage({ listingId }) {
   const [error, setError]     = useState('');
 
   useEffect(() => {
-    fetch(`/api/listings/${listingId}`)
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    fetch(`/api/listings/${listingId}`, { signal: controller.signal })
+      .then(r => { clearTimeout(timer); if (!r.ok) throw new Error(); return r.json(); })
       .then(d => { setListing(d); setLoading(false); })
-      .catch(() => { setError('Vehicle not found.'); setLoading(false); });
+      .catch(() => { clearTimeout(timer); setError('Vehicle not found.'); setLoading(false); });
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [listingId]);
 
   const finalPrice = listing
@@ -144,6 +153,13 @@ export default function CarDetailPage({ listingId }) {
       <NavBar />
       <main className="ed-main">
 
+        {/* Back link */}
+        <div style={{ padding: '12px 20px' }}>
+          <a href="#/vehicles" className="ed-back-link">
+            <Icon name="chevron-left" size={16} /> Back to vehicles
+          </a>
+        </div>
+
         {loading && (
           <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ed-text-muted)' }}>
             Loading vehicle details…
@@ -152,7 +168,9 @@ export default function CarDetailPage({ listingId }) {
 
         {error && (
           <div style={{ padding: '80px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, color: 'var(--ed-text-light)' }}>
+              <Icon name="search" size={48} />
+            </div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{error}</div>
             <a href="#/vehicles" className="ed-btn ed-btn-primary">Browse All Vehicles</a>
           </div>
@@ -165,32 +183,44 @@ export default function CarDetailPage({ listingId }) {
             <div className="ed-detail-body">
               {/* Title */}
               <div>
-                <div className="ed-badge ed-badge-new" style={{ marginBottom: 10 }}>NEW</div>
-                <h1 className="ed-h2">{listing.year} {listing.make} {listing.model}</h1>
-                {listing.color && (
-                  <p className="ed-muted" style={{ marginTop: 4, fontSize: 14 }}>{listing.color}</p>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span className="ed-badge ed-badge-new">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    Brand New
+                  </span>
+                  {listing.mjPrompt && (
+                    <span className="ed-badge" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A' }}>Featured</span>
+                  )}
+                </div>
+                <div className="ed-detail-make">{listing.make}</div>
+                <h1 className="ed-h2">{listing.model} <span style={{ fontWeight: 500, color: 'var(--ed-text-muted)' }}>{listing.year}</span></h1>
+                <div className="ed-detail-meta">
+                  <span className="ed-car-meta-item"><Icon name="fuel" size={14} />{FUEL_LABELS[listing.fuelType] || listing.fuelType}</span>
+                  <span className="ed-car-meta-sep" />
+                  <span className="ed-car-meta-item"><Icon name="settings" size={14} />{listing.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'}</span>
+                  {listing.power && <><span className="ed-car-meta-sep" /><span className="ed-car-meta-item"><Icon name="zap" size={14} />{listing.power} hp</span></>}
+                </div>
               </div>
 
               {/* Price card */}
               <div className="ed-price-card">
                 <div className="ed-price-label">All-inclusive import price</div>
                 <div className="ed-price-value">{fmtPrice(finalPrice)}</div>
-                <div className="ed-price-note">Includes shipping, customs duties & import fees. No hidden costs.</div>
+                <div className="ed-price-note">Includes shipping, customs duties & all import fees. No hidden costs.</div>
               </div>
 
               {/* Specs */}
               <div className="ed-card">
                 <div className="ed-h3" style={{ marginBottom: 12 }}>Specifications</div>
                 <SpecRow label="Year"         value={listing.year} />
-                <SpecRow label="Mileage"      value={listing.mileage === 0 ? '0 km (brand new)' : `${listing.mileage.toLocaleString()} km`} />
+                <SpecRow label="Mileage"      value={listing.mileage === 0 ? '0 km — Brand New' : `${listing.mileage.toLocaleString()} km`} />
                 <SpecRow label="Fuel Type"    value={FUEL_LABELS[listing.fuelType] || listing.fuelType} />
                 <SpecRow label="Transmission" value={listing.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'} />
-                {listing.power     && <SpecRow label="Power"       value={`${listing.power} hp`} />}
-                {listing.engineSize && <SpecRow label="Engine"      value={`${listing.engineSize}L`} />}
-                {listing.color     && <SpecRow label="Colour"      value={listing.color} />}
-                {listing.bodyType  && <SpecRow label="Body Type"   value={listing.bodyType} />}
-                <SpecRow label="Condition" value="Brand New" />
+                {listing.power      && <SpecRow label="Power"      value={`${listing.power} hp`} />}
+                {listing.engineSize && <SpecRow label="Engine"     value={`${listing.engineSize}L`} />}
+                {listing.color      && <SpecRow label="Colour"     value={listing.color} />}
+                {listing.bodyType   && <SpecRow label="Body Type"  value={listing.bodyType} />}
+                <SpecRow label="Condition" value="Brand New — Direct from Dealer" />
               </div>
 
               {/* Features */}
@@ -203,7 +233,7 @@ export default function CarDetailPage({ listingId }) {
                 </div>
               )}
 
-              {/* Order form */}
+              {/* Reservation */}
               <div className="ed-card">
                 <div className="ed-h3" style={{ marginBottom: 6 }}>Reserve This Vehicle</div>
                 <p className="ed-muted" style={{ fontSize: 13, marginBottom: 20 }}>

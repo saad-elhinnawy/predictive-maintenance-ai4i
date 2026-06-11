@@ -55,7 +55,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
           transmission: true, power: true, color: true,
           bodyType: true, photos: true, basePrice: true,
           shippingCost: true, taxRate: true, customsRate: true,
-          status: true,
+          status: true, mjPrompt: true,
         },
       }),
       prisma.carListing.count({ where }),
