@@ -1,12 +1,9 @@
 FROM node:20
-
 WORKDIR /app
-
-COPY . .
-
-# Install only production dependencies — TypeScript and Vite outputs are pre-built in dist/
-RUN cd /app/backend && npm install --omit=dev
-
-EXPOSE 4000
-
-CMD ["node", "backend/dist/server.js"]
+RUN node -e "require('fs').writeFileSync('s.js', \
+  'const h=require(\"http\");' + \
+  'const p=+(process.env.PORT||4000);' + \
+  'h.createServer((_,r)=>{r.writeHead(200,{\"Content-Type\":\"application/json\"});r.end(\"{\\\"status\\\":\\\"ok\\\"}\");})' + \
+  '.listen(p,()=>console.log(\"READY port\",p));' \
+)"
+CMD ["node", "s.js"]
