@@ -10,4 +10,6 @@ RUN cd /app/frontend && npm run build
 RUN cd /app/backend && npx prisma generate
 RUN cd /app/backend && npx tsc
 
+EXPOSE 4000
+
 CMD ["node", "backend/dist/server.js"]

@@ -5,6 +5,14 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
+// Keep the process alive even if Prisma or a route throws an unhandled rejection
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection (process kept alive):', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception (process kept alive):', err);
+});
+
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const app = express();
 
