@@ -1,5 +1,6 @@
 import React from 'react';
 import { BRAND } from '../constants/index.js';
+import Icon from './Icon';
 
 function LogoIcon() {
   return (
@@ -12,10 +13,10 @@ function LogoIcon() {
 }
 
 const TRUST = [
-  { icon: '🛡️', label: 'Licensed Importer', sub: 'Government Certified' },
-  { icon: '⭐', label: 'Brand New Cars',    sub: 'Direct from Dealers' },
-  { icon: '🏆', label: '500+ Imports',      sub: 'Successfully Delivered' },
-  { icon: '🕐', label: '10+ Years',         sub: 'Industry Experience' },
+  { iconName: 'shield', label: 'Licensed Importer', sub: 'Government Certified' },
+  { iconName: 'star',   label: 'Brand New Cars',    sub: 'Direct from Dealers' },
+  { iconName: 'award',  label: '500+ Imports',      sub: 'Successfully Delivered' },
+  { iconName: 'clock',  label: '10+ Years',         sub: 'Industry Experience' },
 ];
 
 export default function Footer() {
@@ -25,7 +26,7 @@ export default function Footer() {
         <div className="ed-trust-grid">
           {TRUST.map(t => (
             <div className="ed-trust-item" key={t.label}>
-              <div className="ed-trust-icon">{t.icon}</div>
+              <div className="ed-trust-icon"><Icon name={t.iconName} size={20} /></div>
               <div>
                 <div className="ed-trust-label">{t.label}</div>
                 <div className="ed-trust-sub">{t.sub}</div>
@@ -47,10 +48,10 @@ export default function Footer() {
                 Premium brand new European cars imported directly from Germany. All-inclusive pricing, real-time tracking, and complete documentation services.
               </p>
               <div className="ed-footer-socials">
-                <a href="#" className="ed-social-icon" aria-label="Facebook">f</a>
-                <a href="#" className="ed-social-icon" aria-label="Instagram">in</a>
-                <a href="#" className="ed-social-icon" aria-label="LinkedIn">li</a>
-                <a href="#" className="ed-social-icon" aria-label="YouTube">▶</a>
+                <a href="#" className="ed-social-icon" aria-label="Facebook"><Icon name="facebook" size={16} /></a>
+                <a href="#" className="ed-social-icon" aria-label="Instagram"><Icon name="instagram" size={16} /></a>
+                <a href="#" className="ed-social-icon" aria-label="LinkedIn"><Icon name="linkedin" size={16} /></a>
+                <a href="#" className="ed-social-icon" aria-label="YouTube"><Icon name="youtube" size={16} /></a>
               </div>
             </div>
 
@@ -78,20 +79,20 @@ export default function Footer() {
             <div className="ed-footer-col">
               <h4>Contact</h4>
               <div className="ed-footer-contact-item">
-                <span className="ed-footer-contact-icon">📞</span>
+                <span className="ed-footer-contact-icon"><Icon name="phone" size={14} /></span>
                 <div className="ed-footer-contact-text">
                   <a href={BRAND.phoneHref}>{BRAND.phone}</a><br />
                   {BRAND.hours}
                 </div>
               </div>
               <div className="ed-footer-contact-item">
-                <span className="ed-footer-contact-icon">✉️</span>
+                <span className="ed-footer-contact-icon"><Icon name="mail" size={14} /></span>
                 <div className="ed-footer-contact-text">
                   <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a>
                 </div>
               </div>
               <div className="ed-footer-contact-item">
-                <span className="ed-footer-contact-icon">📍</span>
+                <span className="ed-footer-contact-icon"><Icon name="map-pin" size={14} /></span>
                 <div className="ed-footer-contact-text">{BRAND.address}</div>
               </div>
             </div>

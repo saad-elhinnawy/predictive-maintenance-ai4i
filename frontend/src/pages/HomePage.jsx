@@ -2,26 +2,33 @@ import React from 'react';
 import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import Icon from '../components/Icon';
 import { BRAND } from '../constants/index.js';
 
+const STATS = [
+  { icon: 'shield', label: 'Licensed Importer', sub: 'Gov. Certified' },
+  { icon: 'truck',  label: '500+ Cars',          sub: 'Delivered' },
+  { icon: 'ship',   label: 'Live Tracking',       sub: 'MarineTraffic' },
+];
+
 const FEATURES = [
-  { icon: '🛡️', title: 'Brand New Only',      desc: 'Direct from authorized European dealers' },
-  { icon: '💰', title: 'Transparent Pricing',  desc: 'All-inclusive price, no hidden fees' },
-  { icon: '🚢', title: 'Live Tracking',        desc: 'Real-time vessel tracking via MarineTraffic' },
-  { icon: '🏆', title: '10+ Years',            desc: '500+ vehicles imported to Egypt' },
+  { icon: 'shield',     title: 'Brand New Only',       desc: 'Direct from authorized European dealers' },
+  { icon: 'calculator', title: 'Transparent Pricing',  desc: 'All-inclusive price, no hidden fees' },
+  { icon: 'ship',       title: 'Live Tracking',        desc: 'Real-time vessel tracking via MarineTraffic' },
+  { icon: 'award',      title: '10+ Years',            desc: '500+ vehicles imported to Egypt' },
 ];
 
 const STEPS = [
-  { num: '01', icon: '🔍', title: 'Choose Your Car',         desc: 'Browse our selection of brand new European vehicles from authorized dealers.' },
-  { num: '02', icon: '💬', title: 'Get All-Inclusive Quote', desc: 'See the final price including shipping, customs, and all import fees upfront.' },
-  { num: '03', icon: '📋', title: 'We Handle Everything',    desc: 'Professional inspection, purchase, export documentation, and shipping.' },
-  { num: '04', icon: '🚢', title: 'Track to Delivery',       desc: 'Real-time tracking from Germany to your doorstep in Egypt.' },
+  { num: '01', icon: 'search',     title: 'Choose Your Car',         desc: 'Browse our selection of brand new European vehicles from authorized dealers.' },
+  { num: '02', icon: 'calculator', title: 'Get All-Inclusive Quote', desc: 'See the final price including shipping, customs, and all import fees upfront.' },
+  { num: '03', icon: 'file-check', title: 'We Handle Everything',    desc: 'Professional inspection, purchase, export documentation, and shipping.' },
+  { num: '04', icon: 'ship',       title: 'Track to Delivery',       desc: 'Real-time tracking from Germany to your doorstep in Egypt.' },
 ];
 
 const BENEFITS = [
-  { icon: '⭐', title: 'Brand New Only',           desc: 'Direct from authorized European dealers' },
-  { icon: '✅', title: 'All-Inclusive Price',       desc: 'Complete cost breakdown shown upfront' },
-  { icon: '📄', title: 'Full Documentation',        desc: 'Complete customs and registration support' },
+  { icon: 'shield',     title: 'Brand New Only',      desc: 'Direct from authorized European dealers' },
+  { icon: 'check',      title: 'All-Inclusive Price', desc: 'Complete cost breakdown shown upfront' },
+  { icon: 'file-check', title: 'Full Documentation',  desc: 'Complete customs and registration support' },
 ];
 
 export default function HomePage() {
@@ -70,30 +77,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Stats row */}
-        <div style={{ padding: '0 0 32px' }}>
+        {/* Stats row — 2-column */}
+        <div className="ed-stats-wrap">
           <div className="ed-stats-row">
-            <div className="ed-stat-item">
-              <div className="ed-stat-icon">🛡️</div>
-              <div>
-                <div className="ed-stat-label">Licensed Importer</div>
-                <div className="ed-stat-sub">Gov. Certified</div>
+            {STATS.map(s => (
+              <div className="ed-stat-item" key={s.label}>
+                <div className="ed-stat-icon"><Icon name={s.icon} size={20} /></div>
+                <div>
+                  <div className="ed-stat-label">{s.label}</div>
+                  <div className="ed-stat-sub">{s.sub}</div>
+                </div>
               </div>
-            </div>
-            <div className="ed-stat-item">
-              <div className="ed-stat-icon">🚗</div>
-              <div>
-                <div className="ed-stat-label">500+ Cars</div>
-                <div className="ed-stat-sub">Delivered</div>
-              </div>
-            </div>
-            <div className="ed-stat-item">
-              <div className="ed-stat-icon">🚢</div>
-              <div>
-                <div className="ed-stat-label">Live Tracking</div>
-                <div className="ed-stat-sub">MarineTraffic</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -103,7 +98,7 @@ export default function HomePage() {
             <div className="ed-features-grid">
               {FEATURES.map(f => (
                 <div className="ed-card ed-feature-card" key={f.title}>
-                  <div className="ed-feature-icon">{f.icon}</div>
+                  <div className="ed-feature-icon"><Icon name={f.icon} size={22} /></div>
                   <div className="ed-feature-title">{f.title}</div>
                   <div className="ed-feature-desc">{f.desc}</div>
                 </div>
@@ -126,13 +121,11 @@ export default function HomePage() {
               {STEPS.map(s => (
                 <div className="ed-step" key={s.num}>
                   <div className="ed-step-icon-wrap">
-                    <div className="ed-step-icon" style={{ fontSize: 28 }}>{s.icon}</div>
+                    <div className="ed-step-icon"><Icon name={s.icon} size={36} /></div>
                     <div className="ed-step-num">{s.num}</div>
                   </div>
-                  <div>
-                    <div className="ed-step-title">{s.title}</div>
-                    <div className="ed-step-desc">{s.desc}</div>
-                  </div>
+                  <div className="ed-step-title">{s.title}</div>
+                  <div className="ed-step-desc">{s.desc}</div>
                 </div>
               ))}
             </div>
@@ -144,7 +137,7 @@ export default function HomePage() {
           <div className="ed-container">
             {BENEFITS.map(b => (
               <div className="ed-benefit-item" key={b.title}>
-                <span className="ed-benefit-icon" style={{ fontSize: 24 }}>{b.icon}</span>
+                <span className="ed-benefit-icon"><Icon name={b.icon} size={22} /></span>
                 <div>
                   <div className="ed-benefit-title">{b.title}</div>
                   <div className="ed-benefit-desc">{b.desc}</div>
@@ -192,11 +185,13 @@ export default function HomePage() {
           <h3>Contact us:</h3>
           <div className="ed-contact-strip-info">
             <div className="ed-contact-strip-item">
-              📞 <a href={BRAND.phoneHref} style={{ color: 'inherit' }}>{BRAND.phone}</a>
+              <Icon name="phone" size={16} />
+              <a href={BRAND.phoneHref} style={{ color: 'inherit' }}>{BRAND.phone}</a>
             </div>
             <div className="ed-contact-strip-sep" />
             <div className="ed-contact-strip-item">
-              ✉️ <a href={`mailto:${BRAND.email}`} style={{ color: 'inherit' }}>{BRAND.email}</a>
+              <Icon name="mail" size={16} />
+              <a href={`mailto:${BRAND.email}`} style={{ color: 'inherit' }}>{BRAND.email}</a>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import Icon from '../components/Icon';
 import { calcFinalPrice, fmtPrice } from '../constants/index.js';
 
 const BRANDS    = ['Mercedes-Benz', 'BMW', 'Audi', 'Porsche'];
@@ -99,8 +100,11 @@ export default function CataloguePage() {
 
         <div className="ed-page-header">
           <div className="ed-container">
-            <div className="ed-badge ed-badge-teal" style={{ marginBottom: 14, display: 'inline-flex' }}>
-              ⭐ Brand New 2025 Models
+            <div className="ed-badge ed-badge-neutral" style={{ marginBottom: 14, display: 'inline-flex' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Brand New 2025 Models
             </div>
             <h1 className="ed-h1">Our Vehicle Collection</h1>
             <p className="ed-lead" style={{ marginTop: 8 }}>Premium European vehicles direct from authorized dealers</p>
@@ -109,7 +113,7 @@ export default function CataloguePage() {
 
         <div className="ed-search-row">
           <div className="ed-search-wrap">
-            <span className="ed-search-icon">🔍</span>
+            <span className="ed-search-icon"><Icon name="search" size={16} /></span>
             <input
               className="ed-input ed-search-input"
               placeholder="Search Mercedes, BMW, Audi, Porsche…"
@@ -123,7 +127,7 @@ export default function CataloguePage() {
             <option value="priceDesc">Price: High to Low</option>
           </select>
           <button className="ed-btn ed-btn-outline ed-filter-btn" onClick={() => setShowFilters(true)}>
-            ⚙️ Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            <Icon name="sliders" size={16} /> Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
         </div>
 
@@ -131,7 +135,7 @@ export default function CataloguePage() {
           <div className="ed-car-grid">{[1,2,3,4].map(i => <SkeletonCard key={i} />)}</div>
         ) : filtered.length === 0 ? (
           <div className="ed-empty-state">
-            <div className="ed-empty-icon" style={{ fontSize: 52 }}>✨</div>
+            <div className="ed-empty-icon"><Icon name="car" size={52} /></div>
             <div className="ed-empty-title">No vehicles found</div>
             <div className="ed-empty-sub">Try adjusting your filters or search terms</div>
             {(activeFilterCount > 0 || search) && (

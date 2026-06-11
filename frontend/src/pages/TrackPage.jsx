@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import Icon from '../components/Icon';
 import { TRACK_STEPS, MILESTONE_STEP_INDEX, fmtPrice, fmtDate } from '../constants/index.js';
 
 function stepClass(idx, currentIdx) {
@@ -10,7 +11,7 @@ function stepClass(idx, currentIdx) {
   return 'ed-prog-step';
 }
 
-const STEP_ICONS = ['📋', '🚛', '⚓', '🚢', '🏖️', '✅'];
+const STEP_ICON_NAMES = ['file-check', 'truck', 'anchor', 'ship', 'map-pin', 'check-circle'];
 
 function TrackResult({ data }) {
   const milestone  = data.shipment?.currentMilestone ?? 'PURCHASED';
@@ -35,7 +36,9 @@ function TrackResult({ data }) {
           {TRACK_STEPS.map((s, i) => (
             <div className={stepClass(i, currentIdx)} key={s.key}>
               <div className="ed-prog-circle">
-                {i <= currentIdx ? '✓' : STEP_ICONS[i]}
+                {i <= currentIdx
+                  ? <Icon name="check" size={13} />
+                  : <Icon name={STEP_ICON_NAMES[i] || 'circle'} size={13} />}
               </div>
               <div className="ed-prog-label">{s.label}</div>
             </div>
@@ -47,7 +50,7 @@ function TrackResult({ data }) {
       {data.shipment && (
         <div className="ed-card ed-vessel-card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span>🚢</span>
+            <Icon name="ship" size={20} />
             <span className="ed-h3">Vessel Information</span>
           </div>
           <div className="ed-vessel-grid">
@@ -75,13 +78,13 @@ function TrackResult({ data }) {
       {events.length > 0 && (
         <div className="ed-card ed-vessel-card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <span>🕐</span>
+            <Icon name="clock" size={20} />
             <span className="ed-h3">Tracking History</span>
           </div>
           <div className="ed-timeline">
             {events.map((ev, i) => (
               <div className="ed-timeline-item" key={i}>
-                <div className="ed-tl-dot">🚢</div>
+                <div className="ed-tl-dot"><Icon name="ship" size={10} /></div>
                 <div>
                   <div className="ed-tl-title">{ev.notes || ev.milestone}</div>
                   <div className="ed-tl-meta">
@@ -121,7 +124,7 @@ function TrackResult({ data }) {
 
 const INFO_CARDS = [
   {
-    icon: '📍',
+    iconName: 'map-pin',
     title: 'What You Can Track',
     items: [
       'Real-time vessel position and speed',
@@ -131,7 +134,7 @@ const INFO_CARDS = [
     ],
   },
   {
-    icon: '🚢',
+    iconName: 'ship',
     title: 'MarineTraffic Integration',
     body: 'We use MarineTraffic data to provide accurate, real-time vessel tracking. View your vehicle\'s journey from Hamburg to Alexandria with satellite-backed GPS data.',
   },
@@ -185,7 +188,7 @@ export default function TrackPage({ orderId }) {
         {/* Track input */}
         <div className="ed-card ed-track-form-card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <span>📍</span>
+            <Icon name="map-pin" size={20} />
             <span className="ed-h3">Track Your Order</span>
           </div>
           <form onSubmit={handleTrack}>
@@ -223,7 +226,7 @@ export default function TrackPage({ orderId }) {
           {INFO_CARDS.map(card => (
             <div className="ed-card" key={card.title}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <span>{card.icon}</span>
+                <Icon name={card.iconName} size={20} />
                 <span className="ed-h3">{card.title}</span>
               </div>
               {card.items ? (

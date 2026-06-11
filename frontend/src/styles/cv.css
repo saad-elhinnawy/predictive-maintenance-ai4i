@@ -181,8 +181,9 @@ input, textarea, select { font-family: inherit; }
 @media (min-width: 480px) { .ed-hero-ctas { flex-direction: row; flex-wrap: wrap; } }
 
 /* ─── Stats Row ──────────────────────────────────────────── */
-.ed-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--ed-border); border: 1px solid var(--ed-border); border-radius: var(--ed-radius); overflow: hidden; margin: 0 20px; }
-.ed-stat-item { background: var(--ed-bg); padding: 20px 12px; display: flex; align-items: center; gap: 12px; }
+.ed-stats-wrap { padding: 24px 20px 32px; }
+.ed-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ed-stat-item { background: var(--ed-bg); padding: 14px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--ed-border); border-radius: var(--ed-radius); }
 .ed-stat-icon { width: 40px; height: 40px; flex-shrink: 0; background: var(--ed-primary-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--ed-primary); }
 .ed-stat-label { font-size: 13px; font-weight: 600; color: var(--ed-text); line-height: 1.3; }
 .ed-stat-sub   { font-size: 11px; color: var(--ed-text-muted); margin-top: 2px; }
@@ -194,14 +195,15 @@ input, textarea, select { font-family: inherit; }
 .ed-feature-icon { width: 48px; height: 48px; background: var(--ed-primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--ed-primary); margin-bottom: 14px; }
 .ed-feature-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
 .ed-feature-desc  { font-size: 13px; color: var(--ed-text-muted); line-height: 1.5; }
+.ed-features-grid .ed-card:last-child { border-color: var(--ed-primary); }
 
 /* ─── How It Works ───────────────────────────────────────── */
-.ed-how-section { padding: 56px 20px; background: var(--ed-bg-soft); }
+.ed-how-section { padding: 56px 20px; background: var(--ed-bg); }
 .ed-how-section .ed-center { margin-bottom: 40px; }
 .ed-steps { display: flex; flex-direction: column; gap: 32px; }
 .ed-step  { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; }
 .ed-step-icon-wrap { position: relative; }
-.ed-step-icon { width: 72px; height: 72px; background: var(--ed-primary-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--ed-primary); }
+.ed-step-icon { width: 96px; height: 96px; background: var(--ed-primary-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--ed-primary); }
 .ed-step-num  { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--ed-primary); color: #fff; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .ed-step-title { font-size: 16px; font-weight: 700; }
 .ed-step-desc  { font-size: 14px; color: var(--ed-text-muted); line-height: 1.5; }
@@ -309,7 +311,7 @@ input, textarea, select { font-family: inherit; }
 .ed-status-card { margin: 24px 20px 0; }
 .ed-status-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .ed-status-id   { font-size: 12px; color: var(--ed-text-muted); margin-top: 4px; }
-.ed-status-badge { padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #DBEAFE; color: #1D4ED8; }
+.ed-status-badge { padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--ed-primary-light); color: var(--ed-primary-dark); }
 .ed-status-badge.delivered { background: #D1FAE5; color: #065F46; }
 
 .ed-progress-steps { display: flex; overflow-x: auto; padding-bottom: 8px; gap: 0; }

@@ -2,12 +2,13 @@ import React from 'react';
 import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import Icon from '../components/Icon';
 
 const VALUES = [
-  { icon: '🛡️', title: 'Trust & Transparency',  desc: 'Complete honesty in every transaction. No hidden fees, no surprises.' },
-  { icon: '🏆', title: 'Premium Quality',        desc: 'We only source from verified dealers and conduct thorough inspections.' },
-  { icon: '👥', title: 'Customer First',          desc: 'Your satisfaction drives everything we do. End-to-end support included.' },
-  { icon: '⚡', title: 'Efficiency',             desc: 'Streamlined import process. From selection to delivery in as little as 4 weeks.' },
+  { icon: 'shield', title: 'Trust & Transparency',  desc: 'Complete honesty in every transaction. No hidden fees, no surprises.' },
+  { icon: 'award',  title: 'Premium Quality',        desc: 'We only source from verified dealers and conduct thorough inspections.' },
+  { icon: 'users',  title: 'Customer First',          desc: 'Your satisfaction drives everything we do. End-to-end support included.' },
+  { icon: 'zap',    title: 'Efficiency',             desc: 'Streamlined import process. From selection to delivery in as little as 4 weeks.' },
 ];
 
 const MILESTONES = [
@@ -90,7 +91,7 @@ export default function AboutPage() {
             <div className="ed-values-list">
               {VALUES.map(v => (
                 <div className="ed-card ed-value-card" key={v.title}>
-                  <div className="ed-value-icon">{v.icon}</div>
+                  <div className="ed-value-icon"><Icon name={v.icon} size={22} /></div>
                   <div className="ed-value-title">{v.title}</div>
                   <div className="ed-value-desc">{v.desc}</div>
                 </div>
@@ -127,7 +128,7 @@ export default function AboutPage() {
             <div className="ed-diff-list">
               {DIFFERENCE.map(d => (
                 <div className="ed-diff-item" key={d}>
-                  <span className="ed-diff-check">✅</span>
+                  <span className="ed-diff-check"><Icon name="check-circle" size={18} /></span>
                   <span className="ed-diff-text">{d}</span>
                 </div>
               ))}

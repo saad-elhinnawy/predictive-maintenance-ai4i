@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import Icon from '../components/Icon';
 import { BRAND } from '../constants/index.js';
 
 const INFO = [
-  { icon: '📞', label: 'Phone',         val: BRAND.phone,   sub: BRAND.hours,           href: BRAND.phoneHref },
-  { icon: '✉️', label: 'Email',         val: BRAND.email,   sub: 'We reply within 24 hours', href: `mailto:${BRAND.email}` },
-  { icon: '📍', label: 'Location',      val: BRAND.address, sub: null },
-  { icon: '🕐', label: 'Working Hours', val: 'Monday - Saturday', sub: '9:00 AM - 8:00 PM' },
+  { iconName: 'phone',   label: 'Phone',         val: BRAND.phone,   sub: BRAND.hours,           href: BRAND.phoneHref },
+  { iconName: 'mail',    label: 'Email',         val: BRAND.email,   sub: 'We reply within 24 hours', href: `mailto:${BRAND.email}` },
+  { iconName: 'map-pin', label: 'Location',      val: BRAND.address, sub: null },
+  { iconName: 'clock',   label: 'Working Hours', val: 'Monday - Saturday', sub: '9:00 AM - 8:00 PM' },
 ];
 
 const SUBJECTS = ['Car Import Enquiry', 'Customs Clearance', 'Vehicle Inspection', 'Order Tracking', 'General Enquiry'];
@@ -63,7 +64,7 @@ export default function ContactPage() {
         <div className="ed-contact-info-grid">
           {INFO.map(i => (
             <div className="ed-card ed-contact-info-card" key={i.label}>
-              <div className="ed-cinfo-icon">{i.icon}</div>
+              <div className="ed-cinfo-icon"><Icon name={i.iconName} size={20} /></div>
               <div>
                 <div className="ed-cinfo-label">{i.label}</div>
                 {i.href
@@ -83,7 +84,7 @@ export default function ContactPage() {
 
           {sent ? (
             <div style={{ padding: 24, background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8, color: '#065F46' }}><Icon name="check-circle" size={32} /></div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#065F46' }}>Message sent!</div>
               <div style={{ fontSize: 14, color: '#065F46', marginTop: 4 }}>We'll get back to you within 24 hours.</div>
             </div>
@@ -114,7 +115,7 @@ export default function ContactPage() {
               </div>
               {error && <p style={{ color: 'var(--ed-error)', fontSize: 14 }}>{error}</p>}
               <button type="submit" className="ed-btn ed-btn-dark ed-btn-full ed-btn-lg" disabled={sending}>
-                {sending ? 'Sending…' : '✉️  Send Message'}
+                {sending ? 'Sending…' : <><Icon name="mail" size={16} /> Send Message</>}
               </button>
             </form>
           )}
@@ -122,7 +123,7 @@ export default function ContactPage() {
 
         {/* Map placeholder */}
         <div className="ed-map-placeholder">
-          <span style={{ fontSize: 32 }}>📍</span>
+          <Icon name="map-pin" size={32} />
           <p>Map would be integrated here</p>
           <small>{BRAND.address}</small>
         </div>
