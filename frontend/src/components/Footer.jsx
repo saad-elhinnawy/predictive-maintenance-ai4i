@@ -42,7 +42,7 @@ export default function Footer() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <LogoIcon />
-                <div className="ed-footer-brand-name">EuroDrive<span>Egypt</span></div>
+                <div className="ed-footer-brand-name">Euro<span>Drive</span></div>
               </div>
               <p className="ed-footer-tagline" style={{ marginTop: 10 }}>
                 Premium brand new European cars imported directly from Germany. All-inclusive pricing, real-time tracking, and complete documentation services.
@@ -100,7 +100,7 @@ export default function Footer() {
 
           <div className="ed-footer-bottom">
             <span className="ed-footer-copy">
-              © 2026 EuroDrive Egypt. All rights reserved. Registered Import License {BRAND.license}
+              © 2026 EuroDrive. All rights reserved. Registered Import License {BRAND.license}
             </span>
             <div className="ed-footer-legal">
               <a href="#/contact">Privacy Policy</a>

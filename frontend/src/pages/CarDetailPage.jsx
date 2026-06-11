@@ -3,36 +3,58 @@ import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import Icon from '../components/Icon';
-import { calcFinalPrice, fmtPrice } from '../constants/index.js';
+import { calcFinalPrice, fmtPrice, hasColorVariants, getPhotoUrl } from '../constants/index.js';
 
 const FUEL_LABELS = { PETROL: 'Petrol', DIESEL: 'Diesel', HYBRID: 'Hybrid', ELECTRIC: 'Electric' };
 
-function PhotoGallery({ photos }) {
+function PhotoGallery({ urls }) {
   const [idx, setIdx] = useState(0);
 
-  if (!photos || photos.length === 0) return (
+  if (!urls || urls.length === 0) return (
     <div className="ed-detail-gallery" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ed-bg-soft)' }}>
       <Icon name="car" size={64} style={{ color: 'var(--ed-text-light)' }} />
     </div>
   );
 
-  const prev = () => setIdx(i => (i - 1 + photos.length) % photos.length);
-  const next = () => setIdx(i => (i + 1) % photos.length);
+  const prev = () => setIdx(i => (i - 1 + urls.length) % urls.length);
+  const next = () => setIdx(i => (i + 1) % urls.length);
 
   return (
     <div className="ed-detail-gallery">
-      <img className="ed-gallery-img" src={photos[idx]} alt={`Photo ${idx + 1}`} />
-      {photos.length > 1 && (
+      <img className="ed-gallery-img" src={urls[idx]} alt={`Photo ${idx + 1}`} />
+      {urls.length > 1 && (
         <>
           <button className="ed-gallery-nav ed-gallery-prev" onClick={prev}>‹</button>
           <button className="ed-gallery-nav ed-gallery-next" onClick={next}>›</button>
           <div className="ed-gallery-dots">
-            {photos.map((_, i) => (
+            {urls.map((_, i) => (
               <button key={i} className={`ed-gallery-dot ${i === idx ? 'active' : ''}`} onClick={() => setIdx(i)} />
             ))}
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function ColorSelector({ photos, activeColor, onSelect }) {
+  if (!hasColorVariants(photos)) return null;
+  return (
+    <div className="ed-detail-color-selector">
+      <div className="ed-detail-color-label">
+        Colour: <strong>{photos[activeColor]?.color}</strong>
+      </div>
+      <div className="ed-color-dots" style={{ marginTop: 8 }}>
+        {photos.map((v, i) => (
+          <button
+            key={i}
+            className={`ed-color-dot${activeColor === i ? ' active' : ''}`}
+            style={{ background: v.hex, width: 28, height: 28 }}
+            title={v.color}
+            onClick={() => onSelect(i)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -126,16 +148,17 @@ function OrderForm({ listing }) {
 }
 
 export default function CarDetailPage({ listingId }) {
-  const [listing, setListing] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [listing, setListing]       = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
+  const [activeColor, setActiveColor] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     fetch(`/api/listings/${listingId}`, { signal: controller.signal })
       .then(r => { clearTimeout(timer); if (!r.ok) throw new Error(); return r.json(); })
-      .then(d => { setListing(d); setLoading(false); })
+      .then(d => { setListing(d); setActiveColor(0); setLoading(false); })
       .catch(() => { clearTimeout(timer); setError('Vehicle not found.'); setLoading(false); });
     return () => { clearTimeout(timer); controller.abort(); };
   }, [listingId]);
@@ -144,7 +167,11 @@ export default function CarDetailPage({ listingId }) {
     ? calcFinalPrice(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate)
     : 0;
 
-  const photos   = listing ? (Array.isArray(listing.photos) ? listing.photos : []) : [];
+  const rawPhotos = listing ? (Array.isArray(listing.photos) ? listing.photos : []) : [];
+  const colorVars = hasColorVariants(rawPhotos);
+  const galleryUrls = colorVars
+    ? (rawPhotos[activeColor]?.urls || [])
+    : rawPhotos.filter(u => typeof u === 'string');
   const features = listing?.features ? (Array.isArray(listing.features) ? listing.features : []) : [];
 
   return (
@@ -178,7 +205,7 @@ export default function CarDetailPage({ listingId }) {
 
         {listing && (
           <>
-            <PhotoGallery photos={photos} />
+            <PhotoGallery urls={galleryUrls} />
 
             <div className="ed-detail-body">
               {/* Title */}
@@ -200,6 +227,7 @@ export default function CarDetailPage({ listingId }) {
                   <span className="ed-car-meta-item"><Icon name="settings" size={14} />{listing.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'}</span>
                   {listing.power && <><span className="ed-car-meta-sep" /><span className="ed-car-meta-item"><Icon name="zap" size={14} />{listing.power} hp</span></>}
                 </div>
+                <ColorSelector photos={rawPhotos} activeColor={activeColor} onSelect={setActiveColor} />
               </div>
 
               {/* Price card */}

@@ -19,7 +19,7 @@ export default function NavBar() {
       <nav className="ed-navbar">
         <a href="#/" className="ed-navbar-logo">
           <LogoIcon />
-          <span className="ed-logo-text">EuroDrive<span>Egypt</span></span>
+          <span className="ed-logo-text">Euro<span>Drive</span></span>
         </a>
         <button className="ed-hamburger" onClick={() => setOpen(true)} aria-label="Open menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -34,7 +34,7 @@ export default function NavBar() {
             <div className="ed-drawer-header">
               <div className="ed-drawer-logo">
                 <LogoIcon />
-                <span>EuroDriveEgypt</span>
+                <span>Euro<span style={{color:'var(--ed-primary)'}}>Drive</span></span>
               </div>
               <button className="ed-drawer-close" onClick={close}>✕</button>
             </div>

@@ -282,6 +282,18 @@ input, textarea, select { font-family: inherit; }
 .ed-car-price-label { font-size: 12px; color: var(--ed-primary); font-weight: 500; }
 .ed-car-view  { font-size: 14px; font-weight: 600; color: var(--ed-primary); }
 
+/* ─── Color variants ─────────────────────────────────────── */
+.ed-color-bar { display: flex; align-items: center; gap: 10px; padding: 8px 14px 4px; background: var(--ed-bg-soft); border-top: 1px solid var(--ed-border-light); }
+.ed-color-dots { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ed-color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 100ms, border-color 100ms; outline: none; flex-shrink: 0; }
+.ed-color-dot:hover { transform: scale(1.15); }
+.ed-color-dot.active { border-color: var(--ed-primary); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ed-primary); }
+.ed-color-name { font-size: 11px; color: var(--ed-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ed-color-more { font-size: 11px; color: var(--ed-text-light); }
+.ed-detail-color-selector { margin-top: 14px; padding: 14px; background: var(--ed-bg-soft); border-radius: var(--ed-radius-sm); border: 1px solid var(--ed-border-light); }
+.ed-detail-color-label { font-size: 13px; color: var(--ed-text-muted); }
+.ed-detail-color-label strong { color: var(--ed-text); }
+
 .ed-empty-state { padding: 64px 20px; text-align: center; }
 .ed-empty-icon  { color: var(--ed-text-light); display: flex; justify-content: center; margin-bottom: 16px; }
 .ed-empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }

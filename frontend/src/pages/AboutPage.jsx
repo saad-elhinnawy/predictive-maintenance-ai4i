@@ -41,7 +41,7 @@ export default function AboutPage() {
             <div className="ed-label" style={{ marginBottom: 12 }}>About Us</div>
             <h1 className="ed-h1">Bringing European Excellence<br />to Egyptian Roads</h1>
             <p className="ed-lead" style={{ marginTop: 16 }}>
-              Founded with a passion for quality automobiles, EuroDrive Egypt has become the premier
+              Founded with a passion for quality automobiles, EuroDrive has become the premier
               destination for importing luxury European vehicles. We combine expertise, transparency,
               and exceptional service to make your dream car a reality.
             </p>

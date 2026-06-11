@@ -3,22 +3,49 @@ import TopBar from '../components/TopBar';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import Icon from '../components/Icon';
-import { calcFinalPrice, fmtPrice } from '../constants/index.js';
+import { calcFinalPrice, fmtPrice, hasColorVariants, getPhotoUrl } from '../constants/index.js';
 
-const BRANDS     = ['Mercedes-Benz', 'BMW', 'Audi', 'Porsche'];
+const BRANDS     = ['Mercedes-Benz', 'BMW', 'Land Rover'];
 const BODY_TYPES  = ['Sedan', 'SUV', 'Coupe'];
 const FUEL_TYPES  = ['PETROL', 'DIESEL', 'HYBRID', 'ELECTRIC'];
 const FUEL_LABELS = { PETROL: 'Petrol', DIESEL: 'Diesel', HYBRID: 'Hybrid', ELECTRIC: 'Electric' };
 
+function ColorDots({ photos, active, onSelect }) {
+  if (!hasColorVariants(photos)) return null;
+  const visible = photos.slice(0, 5);
+  return (
+    <div className="ed-color-dots" onClick={e => e.stopPropagation()}>
+      {visible.map((v, i) => (
+        <button
+          key={i}
+          className={`ed-color-dot${active === i ? ' active' : ''}`}
+          style={{ background: v.hex }}
+          title={v.color}
+          onClick={() => onSelect(i)}
+        />
+      ))}
+      {photos.length > 5 && (
+        <span className="ed-color-more">+{photos.length - 5}</span>
+      )}
+    </div>
+  );
+}
+
 function CarCard({ listing }) {
   const photos     = Array.isArray(listing.photos) ? listing.photos : [];
-  const photo      = photos[0] || `https://picsum.photos/seed/${listing.id || 'car'}/800/500`;
+  const colorVars  = hasColorVariants(photos);
+  const [activeColor, setActiveColor] = useState(0);
+
+  const photoUrl = getPhotoUrl(photos, activeColor, 0)
+    || `https://picsum.photos/seed/${listing.id || 'car'}/800/500`;
+
+  const activeColorName = colorVars ? photos[activeColor]?.color : null;
   const finalPrice = calcFinalPrice(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate);
 
   return (
     <div className="ed-car-card" onClick={() => { window.location.hash = `#/vehicles/${listing.id}`; }}>
       <div className="ed-car-photo-wrap">
-        <img className="ed-car-photo" src={photo} alt={`${listing.make} ${listing.model}`} loading="lazy" />
+        <img className="ed-car-photo" src={photoUrl} alt={`${listing.make} ${listing.model}`} loading="lazy" />
         <div className="ed-car-badge-tl">
           <span className="ed-badge ed-badge-new">
             <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -31,6 +58,14 @@ function CarCard({ listing }) {
           </div>
         )}
       </div>
+
+      {colorVars && (
+        <div className="ed-color-bar" onClick={e => e.stopPropagation()}>
+          <ColorDots photos={photos} active={activeColor} onSelect={setActiveColor} />
+          {activeColorName && <span className="ed-color-name">{activeColorName}</span>}
+        </div>
+      )}
+
       <div className="ed-car-info">
         <div className="ed-car-make">{listing.make}</div>
         <div className="ed-car-model">
@@ -46,6 +81,15 @@ function CarCard({ listing }) {
             <Icon name="settings" size={13} />
             {listing.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'}
           </span>
+          {listing.power && (
+            <>
+              <span className="ed-car-meta-sep" />
+              <span className="ed-car-meta-item">
+                <Icon name="zap" size={13} />
+                {listing.power} hp
+              </span>
+            </>
+          )}
         </div>
         <div className="ed-car-price">{fmtPrice(finalPrice)}</div>
         <div className="ed-car-footer">
@@ -134,7 +178,7 @@ export default function CataloguePage() {
             <span className="ed-search-icon"><Icon name="search" size={16} /></span>
             <input
               className="ed-input ed-search-input"
-              placeholder="Search Mercedes, BMW, Audi, Porsche…"
+              placeholder="Search Mercedes, BMW, Land Rover, Range Rover…"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />

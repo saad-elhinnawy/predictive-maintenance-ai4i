@@ -1,5 +1,5 @@
 export const BRAND = {
-  name:    'EuroDriveEgypt',
+  name:    'EuroDrive',
   phone:   '+20 155 105 0018',
   phoneHref: 'tel:+201551050018',
   email:   'import@eurodrive-egypt.com',
@@ -38,6 +38,19 @@ export const MILESTONE_STEP_INDEX = {
   INLAND_TO_CUSTOMER: 4,
   DELIVERED:          5,
 };
+
+export function hasColorVariants(photos) {
+  return Array.isArray(photos) && photos.length > 0 && typeof photos[0] === 'object' && photos[0] !== null && 'hex' in photos[0];
+}
+
+export function getPhotoUrl(photos, colorIdx = 0, photoIdx = 0) {
+  if (!Array.isArray(photos) || photos.length === 0) return null;
+  if (hasColorVariants(photos)) {
+    const v = photos[Math.min(colorIdx, photos.length - 1)];
+    return (v && v.urls && v.urls[photoIdx]) || v?.urls?.[0] || null;
+  }
+  return photos[photoIdx] || photos[0] || null;
+}
 
 export function calcFinalPrice(basePrice, shippingCost, taxRate, customsRate) {
   const duties = basePrice * (taxRate + customsRate);
