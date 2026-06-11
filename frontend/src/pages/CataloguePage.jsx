@@ -76,10 +76,13 @@ export default function CataloguePage() {
   const [fuelType, setFuelType] = useState('');
 
   useEffect(() => {
-    fetch('/api/listings?limit=50')
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    fetch('/api/listings?limit=50', { signal: controller.signal })
       .then(r => r.json())
-      .then(d => { setListings(d.listings || []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then(d => { clearTimeout(timer); setListings(d.listings || []); setLoading(false); })
+      .catch(() => { clearTimeout(timer); setLoading(false); });
+    return () => { clearTimeout(timer); controller.abort(); };
   }, []);
 
   const filtered = useMemo(() => {

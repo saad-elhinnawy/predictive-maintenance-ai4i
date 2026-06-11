@@ -16,42 +16,47 @@ const createOrderSchema = zod_1.z.object({
     customerPhone: zod_1.z.string().min(7),
 });
 // POST /api/orders — public, no auth required
-router.post('/', async (req, res) => {
-    const parsed = createOrderSchema.safeParse(req.body);
-    if (!parsed.success) {
-        res.status(400).json({ error: parsed.error.flatten() });
-        return;
-    }
-    const { listingId, customerName, customerEmail, customerPhone } = parsed.data;
-    const listing = await prisma_1.default.carListing.findUnique({ where: { id: listingId } });
-    if (!listing) {
-        res.status(404).json({ error: 'Listing not found' });
-        return;
-    }
-    if (listing.status !== 'AVAILABLE') {
-        res.status(409).json({ error: 'This vehicle is no longer available' });
-        return;
-    }
-    const totalPrice = (0, listings_1.calcFinalPrice)(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate);
-    const order = await prisma_1.default.order.create({
-        data: {
-            customerName,
-            customerEmail,
-            customerPhone,
-            listingId: listing.id,
-            carModel: `${listing.year} ${listing.make} ${listing.model}`,
-            configuration: {
-                color: listing.color ?? 'Not specified',
-                fuel: listing.fuelType,
-                transmission: listing.transmission,
-                bodyType: listing.bodyType ?? 'Sedan',
-                mileage: listing.mileage,
+router.post('/', async (req, res, next) => {
+    try {
+        const parsed = createOrderSchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({ error: parsed.error.flatten() });
+            return;
+        }
+        const { listingId, customerName, customerEmail, customerPhone } = parsed.data;
+        const listing = await prisma_1.default.carListing.findUnique({ where: { id: listingId } });
+        if (!listing) {
+            res.status(404).json({ error: 'Listing not found' });
+            return;
+        }
+        if (listing.status !== 'AVAILABLE') {
+            res.status(409).json({ error: 'This vehicle is no longer available' });
+            return;
+        }
+        const totalPrice = (0, listings_1.calcFinalPrice)(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate);
+        const order = await prisma_1.default.order.create({
+            data: {
+                customerName,
+                customerEmail,
+                customerPhone,
+                listingId: listing.id,
+                carModel: `${listing.year} ${listing.make} ${listing.model}`,
+                configuration: {
+                    color: listing.color ?? 'Not specified',
+                    fuel: listing.fuelType,
+                    transmission: listing.transmission,
+                    bodyType: listing.bodyType ?? 'Sedan',
+                    mileage: listing.mileage,
+                },
+                totalPrice,
             },
-            totalPrice,
-        },
-    });
-    (0, email_1.sendOrderConfirmation)(customerEmail, customerName, order.carModel, order.id).catch(console.error);
-    res.status(201).json({ orderId: order.id });
+        });
+        (0, email_1.sendOrderConfirmation)(customerEmail, customerName, order.carModel, order.id).catch(console.error);
+        res.status(201).json({ orderId: order.id });
+    }
+    catch (err) {
+        next(err);
+    }
 });
 exports.default = router;
 //# sourceMappingURL=orders.js.map
