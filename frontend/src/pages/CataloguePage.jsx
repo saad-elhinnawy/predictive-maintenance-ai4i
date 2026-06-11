@@ -5,32 +5,48 @@ import Footer from '../components/Footer';
 import Icon from '../components/Icon';
 import { calcFinalPrice, fmtPrice } from '../constants/index.js';
 
-const BRANDS    = ['Mercedes-Benz', 'BMW', 'Audi', 'Porsche'];
-const BODY_TYPES = ['Sedan', 'SUV', 'Coupe'];
-const FUEL_TYPES = ['PETROL', 'DIESEL', 'HYBRID', 'ELECTRIC'];
+const BRANDS     = ['Mercedes-Benz', 'BMW', 'Audi', 'Porsche'];
+const BODY_TYPES  = ['Sedan', 'SUV', 'Coupe'];
+const FUEL_TYPES  = ['PETROL', 'DIESEL', 'HYBRID', 'ELECTRIC'];
 const FUEL_LABELS = { PETROL: 'Petrol', DIESEL: 'Diesel', HYBRID: 'Hybrid', ELECTRIC: 'Electric' };
 
 function CarCard({ listing }) {
   const photos     = Array.isArray(listing.photos) ? listing.photos : [];
-  const photo      = photos[0] || 'https://picsum.photos/seed/car/800/500';
+  const photo      = photos[0] || `https://picsum.photos/seed/${listing.id || 'car'}/800/500`;
   const finalPrice = calcFinalPrice(listing.basePrice, listing.shippingCost, listing.taxRate, listing.customsRate);
 
   return (
     <div className="ed-car-card" onClick={() => { window.location.hash = `#/vehicles/${listing.id}`; }}>
       <div className="ed-car-photo-wrap">
         <img className="ed-car-photo" src={photo} alt={`${listing.make} ${listing.model}`} loading="lazy" />
-        <div className="ed-car-photo-badge"><span className="ed-badge ed-badge-new">NEW</span></div>
+        <div className="ed-car-badge-tl">
+          <span className="ed-badge ed-badge-new">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Brand New
+          </span>
+        </div>
       </div>
       <div className="ed-car-info">
-        <div className="ed-car-make-model">{listing.year} {listing.make} {listing.model}</div>
+        <div className="ed-car-make">{listing.make}</div>
+        <div className="ed-car-model">
+          {listing.model} <span className="ed-car-year">{listing.year}</span>
+        </div>
         <div className="ed-car-meta">
-          <span>{listing.mileage === 0 ? '0 km' : `${listing.mileage.toLocaleString()} km`}</span>
-          <span>{FUEL_LABELS[listing.fuelType] || listing.fuelType}</span>
-          <span>{listing.transmission === 'AUTOMATIC' ? 'Auto' : 'Manual'}</span>
-          {listing.power && <span>{listing.power} hp</span>}
+          <span className="ed-car-meta-item">
+            <Icon name="fuel" size={13} />
+            {FUEL_LABELS[listing.fuelType] || listing.fuelType}
+          </span>
+          <span className="ed-car-meta-sep" />
+          <span className="ed-car-meta-item">
+            <Icon name="settings" size={13} />
+            {listing.transmission === 'AUTOMATIC' ? 'Automatic' : 'Manual'}
+          </span>
         </div>
         <div className="ed-car-price">{fmtPrice(finalPrice)}</div>
-        <div className="ed-car-price-label">All-inclusive · import price</div>
+        <div className="ed-car-footer">
+          <div className="ed-car-price-label">All-inclusive price</div>
+          <span className="ed-car-view">View →</span>
+        </div>
       </div>
     </div>
   );
@@ -39,26 +55,25 @@ function CarCard({ listing }) {
 function SkeletonCard() {
   return (
     <div className="ed-card" style={{ padding: 0, overflow: 'hidden' }}>
-      <div className="ed-skeleton" style={{ height: 180 }} />
+      <div className="ed-skeleton" style={{ height: 200 }} />
       <div style={{ padding: 16 }}>
-        <div className="ed-skeleton" style={{ height: 16, marginBottom: 10 }} />
-        <div className="ed-skeleton" style={{ height: 12, width: '60%', marginBottom: 14 }} />
-        <div className="ed-skeleton" style={{ height: 22, width: '40%' }} />
+        <div className="ed-skeleton" style={{ height: 12, width: '40%', marginBottom: 8 }} />
+        <div className="ed-skeleton" style={{ height: 18, width: '70%', marginBottom: 10 }} />
+        <div className="ed-skeleton" style={{ height: 12, width: '55%', marginBottom: 14 }} />
+        <div className="ed-skeleton" style={{ height: 26, width: '50%' }} />
       </div>
     </div>
   );
 }
 
 export default function CataloguePage() {
-  const [listings, setListings]       = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState('');
-  const [sort, setSort]               = useState('newest');
-  const [showFilters, setShowFilters] = useState(false);
-  const [brands, setBrands]           = useState([]);
-  const [bodyTypes, setBodyTypes]     = useState([]);
-  const [fuelTypes, setFuelTypes]     = useState([]);
-  const [maxPrice, setMaxPrice]       = useState(400000);
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState('');
+  const [sort, setSort]         = useState('newest');
+  const [brand, setBrand]       = useState('');
+  const [bodyType, setBodyType] = useState('');
+  const [fuelType, setFuelType] = useState('');
 
   useEffect(() => {
     fetch('/api/listings?limit=50')
@@ -73,24 +88,19 @@ export default function CataloguePage() {
       const q = search.toLowerCase();
       out = out.filter(l => `${l.make} ${l.model} ${l.year}`.toLowerCase().includes(q));
     }
-    if (brands.length)    out = out.filter(l => brands.includes(l.make));
-    if (bodyTypes.length) out = out.filter(l => bodyTypes.includes(l.bodyType));
-    if (fuelTypes.length) out = out.filter(l => fuelTypes.includes(l.fuelType));
-    out = out.filter(l => l.basePrice <= maxPrice);
+    if (brand)    out = out.filter(l => l.make === brand);
+    if (bodyType) out = out.filter(l => l.bodyType === bodyType);
+    if (fuelType) out = out.filter(l => l.fuelType === fuelType);
     if (sort === 'priceAsc')  out.sort((a, b) => a.basePrice - b.basePrice);
     if (sort === 'priceDesc') out.sort((a, b) => b.basePrice - a.basePrice);
     return out;
-  }, [listings, search, brands, bodyTypes, fuelTypes, maxPrice, sort]);
+  }, [listings, search, brand, bodyType, fuelType, sort]);
 
-  function toggleFilter(list, setList, val) {
-    setList(l => l.includes(val) ? l.filter(x => x !== val) : [...l, val]);
-  }
+  const hasFilters = !!(brand || bodyType || fuelType || search.trim());
 
   function clearAll() {
-    setBrands([]); setBodyTypes([]); setFuelTypes([]); setMaxPrice(400000); setSearch('');
+    setBrand(''); setBodyType(''); setFuelType(''); setSearch('');
   }
-
-  const activeFilterCount = brands.length + bodyTypes.length + fuelTypes.length + (maxPrice < 400000 ? 1 : 0);
 
   return (
     <div className="ed-page">
@@ -111,8 +121,8 @@ export default function CataloguePage() {
           </div>
         </div>
 
-        <div className="ed-search-row">
-          <div className="ed-search-wrap">
+        <div className="ed-filter-bar">
+          <div className="ed-search-wrap" style={{ marginBottom: 12 }}>
             <span className="ed-search-icon"><Icon name="search" size={16} /></span>
             <input
               className="ed-input ed-search-input"
@@ -121,14 +131,45 @@ export default function CataloguePage() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <select className="ed-input ed-select" style={{ width: 'auto' }} value={sort} onChange={e => setSort(e.target.value)}>
-            <option value="newest">Newest First</option>
-            <option value="priceAsc">Price: Low to High</option>
-            <option value="priceDesc">Price: High to Low</option>
-          </select>
-          <button className="ed-btn ed-btn-outline ed-filter-btn" onClick={() => setShowFilters(true)}>
-            <Icon name="sliders" size={16} /> Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-          </button>
+
+          <div className="ed-filter-pills">
+            <select className="ed-filter-pill" value={brand} onChange={e => setBrand(e.target.value)}>
+              <option value="">All Brands</option>
+              {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+            <select className="ed-filter-pill" value={fuelType} onChange={e => setFuelType(e.target.value)}>
+              <option value="">Fuel Type</option>
+              {FUEL_TYPES.map(f => <option key={f} value={f}>{FUEL_LABELS[f]}</option>)}
+            </select>
+            <select className="ed-filter-pill" value={bodyType} onChange={e => setBodyType(e.target.value)}>
+              <option value="">Body Type</option>
+              {BODY_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+            <select className="ed-filter-pill" value={sort} onChange={e => setSort(e.target.value)}>
+              <option value="newest">Newest First</option>
+              <option value="priceAsc">Price: Low → High</option>
+              <option value="priceDesc">Price: High → Low</option>
+            </select>
+          </div>
+
+          {hasFilters && (
+            <button className="ed-filter-clear" onClick={clearAll}>× Clear</button>
+          )}
+
+          {hasFilters && (brand || bodyType || fuelType) && (
+            <div className="ed-active-filters">
+              <span className="ed-active-label">Active filters:</span>
+              {brand    && <span className="ed-filter-chip">{brand} <button onClick={() => setBrand('')}>×</button></span>}
+              {fuelType && <span className="ed-filter-chip">{FUEL_LABELS[fuelType]} <button onClick={() => setFuelType('')}>×</button></span>}
+              {bodyType && <span className="ed-filter-chip">{bodyType} <button onClick={() => setBodyType('')}>×</button></span>}
+            </div>
+          )}
+
+          {!loading && (
+            <div className="ed-results-count">
+              {filtered.length} brand new {filtered.length === 1 ? 'vehicle' : 'vehicles'} available
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -138,67 +179,13 @@ export default function CataloguePage() {
             <div className="ed-empty-icon"><Icon name="car" size={52} /></div>
             <div className="ed-empty-title">No vehicles found</div>
             <div className="ed-empty-sub">Try adjusting your filters or search terms</div>
-            {(activeFilterCount > 0 || search) && (
+            {hasFilters && (
               <button className="ed-btn ed-btn-outline" onClick={clearAll}>Clear All Filters</button>
             )}
           </div>
         ) : (
           <div className="ed-car-grid">
             {filtered.map(l => <CarCard key={l.id} listing={l} />)}
-          </div>
-        )}
-
-        {showFilters && (
-          <div className="ed-filters-overlay" onClick={() => setShowFilters(false)}>
-            <div className="ed-filters-panel" onClick={e => e.stopPropagation()}>
-              <div className="ed-filters-header">
-                Filters
-                <button onClick={() => setShowFilters(false)}>✕</button>
-              </div>
-              <div className="ed-filters-body">
-                <div className="ed-filter-group">
-                  <h4>Brand</h4>
-                  <div className="ed-checkbox-list">
-                    {BRANDS.map(b => (
-                      <div className="ed-checkbox-item" key={b}>
-                        <input type="checkbox" id={`b-${b}`} checked={brands.includes(b)} onChange={() => toggleFilter(brands, setBrands, b)} />
-                        <label htmlFor={`b-${b}`}>{b}</label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="ed-filter-group">
-                  <h4>Body Type</h4>
-                  <div className="ed-checkbox-list">
-                    {BODY_TYPES.map(bt => (
-                      <div className="ed-checkbox-item" key={bt}>
-                        <input type="checkbox" id={`bt-${bt}`} checked={bodyTypes.includes(bt)} onChange={() => toggleFilter(bodyTypes, setBodyTypes, bt)} />
-                        <label htmlFor={`bt-${bt}`}>{bt}</label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="ed-filter-group">
-                  <h4>Fuel Type</h4>
-                  <div className="ed-checkbox-list">
-                    {FUEL_TYPES.map(ft => (
-                      <div className="ed-checkbox-item" key={ft}>
-                        <input type="checkbox" id={`ft-${ft}`} checked={fuelTypes.includes(ft)} onChange={() => toggleFilter(fuelTypes, setFuelTypes, ft)} />
-                        <label htmlFor={`ft-${ft}`}>{FUEL_LABELS[ft]}</label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="ed-filter-group">
-                  <h4>Price Range (EUR)</h4>
-                  <input type="range" className="ed-range-slider" min={0} max={400000} step={5000} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} />
-                  <div className="ed-range-labels"><span>€0</span><span>up to €{maxPrice.toLocaleString()}</span></div>
-                </div>
-              </div>
-              <div className="ed-filters-footer">
-                <button className="ed-btn ed-btn-primary ed-btn-full" onClick={() => setShowFilters(false)}>Apply Filters</button>
-              </div>
-            </div>
           </div>
         )}
 

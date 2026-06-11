@@ -46,7 +46,7 @@ export function calcFinalPrice(basePrice, shippingCost, taxRate, customsRate) {
 }
 
 export function fmtPrice(eur) {
-  return new Intl.NumberFormat('en-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(eur);
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(eur);
 }
 
 export function fmtDate(iso) {

@@ -235,44 +235,53 @@ input, textarea, select { font-family: inherit; }
 @media (min-width: 480px) { .ed-contact-strip-info { flex-direction: row; justify-content: center; } .ed-contact-strip-sep { display: block; } }
 
 /* ─── Catalogue ──────────────────────────────────────────── */
-.ed-search-row { display: flex; gap: 12px; align-items: center; padding: 20px; flex-wrap: wrap; }
-.ed-search-wrap { position: relative; flex: 1; min-width: 180px; }
+.ed-filter-bar  { padding: 16px 20px; }
+.ed-search-wrap { position: relative; }
 .ed-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ed-text-muted); pointer-events: none; }
 .ed-search-input { padding-left: 38px; }
-.ed-filter-btn  { display: flex; align-items: center; gap: 6px; }
-
-.ed-filters-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 150; }
-.ed-filters-panel { position: fixed; top: 0; left: 0; width: min(340px, 90vw); height: 100%; background: #fff; overflow-y: auto; animation: slideInLeft 200ms ease; z-index: 151; }
-@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-.ed-filters-header { padding: 20px; border-bottom: 1px solid var(--ed-border); display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 700; position: sticky; top: 0; background: #fff; z-index: 1; }
-.ed-filters-body   { padding: 20px; display: flex; flex-direction: column; gap: 24px; }
-.ed-filter-group h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
-.ed-checkbox-list  { display: flex; flex-direction: column; gap: 10px; }
-.ed-checkbox-item  { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.ed-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--ed-primary); cursor: pointer; flex-shrink: 0; }
-.ed-checkbox-item label { font-size: 14px; color: var(--ed-text); cursor: pointer; }
-.ed-range-slider { width: 100%; accent-color: var(--ed-primary); }
-.ed-range-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--ed-text-muted); margin-top: 6px; }
-.ed-filters-footer { padding: 20px; border-top: 1px solid var(--ed-border); }
+.ed-filter-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ed-filter-pill {
+  appearance: none;
+  background: var(--ed-bg); border: 1.5px solid var(--ed-border);
+  border-radius: var(--ed-radius-sm); padding: 10px 32px 10px 14px; font-size: 14px;
+  color: var(--ed-text); cursor: pointer; width: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748B' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  transition: border-color var(--ed-transition);
+}
+.ed-filter-pill:focus { outline: none; border-color: var(--ed-primary); }
+.ed-filter-pill[value]:not([value=""]) { border-color: var(--ed-primary); color: var(--ed-primary); font-weight: 600; }
+.ed-filter-clear { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 13px; color: var(--ed-text-muted); text-decoration: underline; cursor: pointer; }
+.ed-active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ed-active-label { font-size: 12px; color: var(--ed-text-muted); }
+.ed-filter-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--ed-primary-light); color: var(--ed-primary-dark); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+.ed-filter-chip button { background: none; border: none; cursor: pointer; color: inherit; font-size: 14px; line-height: 1; padding: 0 0 0 2px; }
+.ed-results-count { font-size: 13px; color: var(--ed-text-muted); margin-top: 12px; }
 
 .ed-car-grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 0 20px 40px; }
-@media (min-width: 480px) { .ed-car-grid { grid-template-columns: 1fr 1fr; } }
-@media (min-width: 900px) { .ed-car-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 640px) { .ed-car-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .ed-car-grid { grid-template-columns: repeat(3, 1fr); } }
 
 .ed-car-card { border-radius: var(--ed-radius); border: 1px solid var(--ed-border); overflow: hidden; background: var(--ed-bg); cursor: pointer; transition: all var(--ed-transition); }
 .ed-car-card:hover { box-shadow: var(--ed-shadow); border-color: var(--ed-primary-mid); transform: translateY(-2px); }
 .ed-car-photo-wrap { position: relative; aspect-ratio: 16/10; overflow: hidden; background: var(--ed-bg-soft); }
 .ed-car-photo { width: 100%; height: 100%; object-fit: cover; transition: transform 300ms ease; }
 .ed-car-card:hover .ed-car-photo { transform: scale(1.03); }
-.ed-car-photo-badge { position: absolute; top: 10px; left: 10px; }
-.ed-car-info { padding: 14px 16px 16px; }
-.ed-car-make-model { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-.ed-car-meta  { display: flex; gap: 10px; font-size: 12px; color: var(--ed-text-muted); margin-bottom: 12px; flex-wrap: wrap; }
-.ed-car-price { font-size: 20px; font-weight: 800; color: var(--ed-primary); }
-.ed-car-price-label { font-size: 11px; color: var(--ed-text-muted); margin-top: 2px; }
+.ed-car-badge-tl { position: absolute; top: 10px; left: 10px; }
+.ed-car-info  { padding: 16px; }
+.ed-car-make  { font-size: 12px; font-weight: 600; color: var(--ed-primary); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+.ed-car-model { font-size: 18px; font-weight: 800; color: var(--ed-text); line-height: 1.2; margin-bottom: 10px; }
+.ed-car-year  { font-size: 15px; font-weight: 500; color: var(--ed-text-muted); }
+.ed-car-meta  { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ed-text-muted); margin-bottom: 14px; }
+.ed-car-meta-item { display: flex; align-items: center; gap: 5px; }
+.ed-car-meta-sep  { width: 1px; height: 14px; background: var(--ed-border); flex-shrink: 0; }
+.ed-car-price { font-size: 26px; font-weight: 800; color: var(--ed-text); margin-bottom: 4px; }
+.ed-car-footer { display: flex; align-items: center; justify-content: space-between; }
+.ed-car-price-label { font-size: 12px; color: var(--ed-primary); font-weight: 500; }
+.ed-car-view  { font-size: 14px; font-weight: 600; color: var(--ed-primary); }
 
 .ed-empty-state { padding: 64px 20px; text-align: center; }
-.ed-empty-icon  { color: var(--ed-text-light); margin: 0 auto 16px; }
+.ed-empty-icon  { color: var(--ed-text-light); display: flex; justify-content: center; margin-bottom: 16px; }
 .ed-empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
 .ed-empty-sub   { font-size: 14px; color: var(--ed-text-muted); margin-bottom: 24px; }
 
