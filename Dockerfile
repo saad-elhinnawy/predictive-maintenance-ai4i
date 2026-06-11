@@ -2,22 +2,18 @@ FROM node:20
 
 WORKDIR /app
 
+# node:20 is Debian Bookworm which already has OpenSSL 3.0, but make it explicit
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
-# Install backend deps (NODE_ENV=development ensures devDeps: TypeScript, etc.)
 RUN cd /app/backend && NODE_ENV=development npm install
-
-# Install frontend deps (devDeps: Vite, etc.)
 RUN cd /app/frontend && NODE_ENV=development npm install
-
-# Build frontend
 RUN cd /app/frontend && npm run build
-
-# Generate Prisma client
 RUN cd /app/backend && npx prisma generate
-
-# Compile TypeScript
 RUN cd /app/backend && npx tsc
 
-# Start: bare server — /api/health has no DB dependency
-CMD ["node", "/app/backend/dist/server.js"]
+# Sanity-check the build produced the entry point
+RUN test -f /app/backend/dist/server.js && echo "✓ dist/server.js exists"
+
+CMD ["node", "backend/dist/server.js"]
