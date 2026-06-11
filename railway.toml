@@ -1,7 +1,8 @@
 [build]
-builder = "DOCKERFILE"
+builder = "NIXPACKS"
 
 [deploy]
+startCommand = "node backend/dist/server.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
