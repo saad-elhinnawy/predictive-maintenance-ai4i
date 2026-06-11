@@ -1,7 +1,7 @@
--- AlterTable: make user_id optional and add customer contact fields
-ALTER TABLE "orders" ALTER COLUMN "user_id" DROP NOT NULL;
+-- AlterTable: make userId optional and add customer contact fields
+ALTER TABLE "orders" ALTER COLUMN "userId" DROP NOT NULL;
 
 ALTER TABLE "orders"
-  ADD COLUMN "customer_name"  TEXT,
-  ADD COLUMN "customer_email" TEXT,
-  ADD COLUMN "customer_phone" TEXT;
+  ADD COLUMN IF NOT EXISTS "customerName"  TEXT,
+  ADD COLUMN IF NOT EXISTS "customerEmail" TEXT,
+  ADD COLUMN IF NOT EXISTS "customerPhone" TEXT;

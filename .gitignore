@@ -1,6 +1,11 @@
 # Node.js
 node_modules/
 dist/
+# Un-ignore pre-built artifacts that Railway needs in the Docker image
+!backend/dist/
+!backend/dist/**
+!frontend/dist/
+!frontend/dist/**
 *.js.map
 .env
 
