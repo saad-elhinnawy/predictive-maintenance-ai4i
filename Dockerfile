@@ -19,5 +19,7 @@ RUN cd backend && npx prisma generate
 # Compile TypeScript
 RUN cd backend && npx tsc
 
-# Start: migrate, seed, then serve
-CMD ["/bin/sh", "-c", "cd /app/backend && npx prisma migrate deploy 2>/dev/null || true && node prisma/seed.js 2>/dev/null || true && node dist/server.js"]
+EXPOSE 4000
+
+# Start: migrate (60s timeout), seed (30s timeout), then serve
+CMD ["/bin/sh", "-c", "cd /app/backend && timeout 60 npx prisma migrate deploy 2>/dev/null || true && timeout 30 node prisma/seed.js 2>/dev/null || true && node dist/server.js"]
