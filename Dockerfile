@@ -4,11 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN cd /app/backend && NODE_ENV=development npm install
-RUN cd /app/frontend && NODE_ENV=development npm install
-RUN cd /app/frontend && npm run build
-RUN cd /app/backend && npx prisma generate
-RUN cd /app/backend && npx tsc
+# Install only production dependencies — TypeScript and Vite outputs are pre-built in dist/
+RUN cd /app/backend && npm install --omit=dev
 
 EXPOSE 4000
 
