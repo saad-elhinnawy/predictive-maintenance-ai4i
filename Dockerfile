@@ -4,20 +4,20 @@ WORKDIR /app
 
 COPY . .
 
-# Install backend deps (devDeps included for TypeScript, etc.)
-RUN NODE_ENV=development npm --prefix backend install
+# Install backend deps (NODE_ENV=development ensures devDeps: TypeScript, etc.)
+RUN cd /app/backend && NODE_ENV=development npm install
 
-# Install frontend deps (devDeps included for Vite)
-RUN NODE_ENV=development npm --prefix frontend install
+# Install frontend deps (devDeps: Vite, etc.)
+RUN cd /app/frontend && NODE_ENV=development npm install
 
 # Build frontend
-RUN npm --prefix frontend run build
+RUN cd /app/frontend && npm run build
 
 # Generate Prisma client
-RUN cd backend && npx prisma generate
+RUN cd /app/backend && npx prisma generate
 
 # Compile TypeScript
-RUN cd backend && npx tsc
+RUN cd /app/backend && npx tsc
 
-# Start server directly — healthcheck at /api/health does not touch the DB
-CMD ["/bin/sh", "-c", "cd /app/backend && node dist/server.js"]
+# Start: bare server — /api/health has no DB dependency
+CMD ["node", "/app/backend/dist/server.js"]
