@@ -1,8 +1,11 @@
+[phases.setup]
+nixPkgs = ["openssl"]
+
 [phases.install]
-cmds = []
+cmds = ["NODE_ENV=development npm --prefix backend install"]
 
 [phases.build]
-cmds = []
+cmds = ["NODE_ENV=development npm --prefix backend run build"]
 
 [start]
-cmd = "node s.js"
+cmd = "node backend/dist/server.js"

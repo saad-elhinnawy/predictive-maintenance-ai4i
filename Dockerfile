@@ -1,4 +1,12 @@
 FROM node:20
+
 WORKDIR /app
-COPY s.js .
-CMD ["node", "s.js"]
+
+COPY . .
+
+# Install only production dependencies — dist/ is pre-built and committed
+RUN cd /app/backend && npm install --omit=dev
+
+EXPOSE 4000
+
+CMD ["node", "backend/dist/server.js"]
