@@ -33,34 +33,42 @@ function Gear({ cx, cy, r, color }) {
 export default function EuroDriveLogo({ width = 130, onDark = false }) {
   const carColor  = onDark ? 'rgba(255,255,255,0.85)' : '#AAAAAA';
   const gearColor = '#C49A2A';
-  const sw = 4.2;
+  const sw = 4.5;
 
   return (
-    <svg width={width} viewBox="0 0 360 228" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-      {/* G-Wagon body outline */}
+    <svg width={width} viewBox="0 0 380 248" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+
+      {/* ── Main body outline (boxy G-Wagon profile) ── */}
       <path
-        d="M 55,160 L 55,90 L 68,57 L 92,38 L 300,38 L 322,57 L 340,90 L 340,160"
+        d="M 58,152 L 58,44 L 74,22 L 96,18 L 304,18 L 328,40 L 342,76 L 342,152"
         fill="none" stroke={carColor} strokeWidth={sw}
         strokeLinejoin="round" strokeLinecap="round"
       />
-      {/* Underbody with wheel arch cutouts */}
+
+      {/* ── Underbody with wheel arch cutouts ── */}
       <path
-        d="M 55,160 L 78,160 Q 108,148 138,160 L 252,160 Q 282,148 312,160 L 340,160"
+        d="M 58,152 L 82,152 Q 118,130 154,152 L 250,152 Q 286,130 322,152 L 342,152"
         fill="none" stroke={carColor} strokeWidth={sw}
         strokeLinejoin="round" strokeLinecap="round"
       />
-      {/* B-pillar (door divider) */}
-      <line x1="200" y1="51" x2="200" y2="160" stroke={carColor} strokeWidth={sw * 0.6} strokeLinecap="round" />
-      {/* Rear C-pillar */}
-      <line x1="68" y1="57" x2="92" y2="38" stroke={carColor} strokeWidth={sw * 0.55} strokeLinecap="round" />
-      {/* Running board */}
-      <line x1="128" y1="170" x2="298" y2="170" stroke={carColor} strokeWidth={sw * 0.85} strokeLinecap="round" />
-      {/* Spare tyre */}
-      <circle cx="43" cy="110" r="28" fill="none" stroke={carColor} strokeWidth={sw} />
-      <circle cx="43" cy="110" r="13" fill="none" stroke={carColor} strokeWidth={sw * 0.55} />
-      {/* Gear wheels */}
-      <Gear cx={108} cy={188} r={30} color={gearColor} />
-      <Gear cx={282} cy={188} r={30} color={gearColor} />
+
+      {/* ── Beltline (separates glass from lower body) ── */}
+      <line x1="75" y1="88" x2="328" y2="88" stroke={carColor} strokeWidth={sw * 0.5} strokeLinecap="round" />
+
+      {/* ── B-pillar ── */}
+      <line x1="202" y1="22" x2="202" y2="152" stroke={carColor} strokeWidth={sw * 0.6} strokeLinecap="round" />
+
+      {/* ── Rear C-pillar ── */}
+      <line x1="74" y1="22" x2="58" y2="44" stroke={carColor} strokeWidth={sw * 0.55} strokeLinecap="round" />
+
+      {/* ── Spare tyre (rear exterior mount) ── */}
+      <circle cx="43" cy="88" r="36" fill="none" stroke={carColor} strokeWidth={sw} />
+      <circle cx="43" cy="88" r="18" fill="none" stroke={carColor} strokeWidth={sw * 0.55} />
+      <circle cx="43" cy="88" r="6"  fill="none" stroke={carColor} strokeWidth={sw * 0.5} />
+
+      {/* ── Gear wheels ── */}
+      <Gear cx={118} cy={186} r={34} color={gearColor} />
+      <Gear cx={286} cy={186} r={34} color={gearColor} />
     </svg>
   );
 }
