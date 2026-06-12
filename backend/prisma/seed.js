@@ -1095,14 +1095,9 @@ const LISTINGS = [
 ];
 
 async function main() {
-  console.log('Clearing existing data…');
-  await prisma.$transaction([
-    prisma.trackingEvent.deleteMany(),
-    prisma.vesselPosition.deleteMany(),
-    prisma.shipment.deleteMany(),
-    prisma.order.deleteMany(),
-    prisma.carListing.deleteMany(),
-  ]);
+  // Only refresh listings — never delete real customer orders
+  console.log('Refreshing car listings…');
+  await prisma.carListing.deleteMany();
 
   console.log(`Seeding ${LISTINGS.length} car listings…`);
   const created = [];
@@ -1119,7 +1114,14 @@ async function main() {
   }
   console.log(`\nCreated ${created.length} listings.`);
 
-  // Demo order on first Mercedes listing
+  // Demo order only if no orders exist yet (first-time seed)
+  const orderCount = await prisma.order.count();
+  if (orderCount > 0) {
+    console.log(`${orderCount} orders already exist — skipping demo order.`);
+    console.log('Seed complete.');
+    return;
+  }
+
   const demoListing = created[0];
   const order = await prisma.order.create({
     data: {
